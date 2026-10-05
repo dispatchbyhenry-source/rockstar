@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Order #{{ order.id }} | Admin{% endblock %}
+{% block content %}
+<main class="max-w-4xl mx-auto px-4 py-9 w-full">
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+    <div>
+      <p class="text-red-600 font-bold text-xs">ADMINISTRATION</p>
+      <h1 class="text-3xl font-black">Order #{{ order.id }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ order.created_at[:19].replace('T', ' ') if order.created_at else '' }} · {{ order.status|capitalize }}</p>
+    </div>
+    <a href="{{ url_for('admin_orders') }}" class="text-red-600 text-sm font-bold">← Order history</a>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-5 mb-5">
+    <section class="bg-white border rounded-2xl p-5 text-sm space-y-1">
+      <h2 class="font-black text-lg mb-3">Customer</h2>
+      <p><b>{{ order.customer_name }}</b></p>
+      <p class="text-slate-500">{{ order.email }}</p>
+      <p class="text-slate-600 whitespace-pre-line mt-2">{{ order.address }}</p>
+      <p class="text-slate-500 mt-2">{{ order.country }}</p>
+    </section>
+    <section class="bg-white border rounded-2xl p-5 text-sm space-y-3">
+      <h2 class="font-black text-lg">Payment & status</h2>
+      <p>{{ order.payment_label }} · {{ order.currency }}</p>
+      {% if order.payment_status == 'paid' %}
+      <p class="text-emerald-700 font-bold">Paid{% if order.payment_amount %} {{ order.payment_currency }} {{ '%.2f'|format(order.payment_amount) }}{% endif %}{% if order.payment_reference %} · {{ order.payment_reference }}{% endif %}</p>
+      {% elif order.payment_method in ['stripe', 'paypal'] %}
+      <p class="text-amber-700 font-bold">Not paid</p>
+      {% endif %}
+      <form method="post" class="space-y-3">
+        <label class="block text-xs font-bold text-slate-500">Order status</label>
+        <select name="status" class="w-full border rounded-xl p-3 text-sm">
+          {% for status in statuses %}
+          <option value="{{ status }}" {% if order.status == status %}selected{% endif %}>{{ status|capitalize }}</option>
+          {% endfor %}
+        </select>
+        <label class="block text-xs font-bold text-slate-500">Carrier</label>
+        <select name="tracking_carrier" class="w-full border rounded-xl p-3 text-sm">
+          <option value="">Not shipped yet</option>
+          {% for carrier in carriers %}
+          <option value="{{ carrier }}" {% if order.tracking_carrier == carrier %}selected{% endif %}>{{ carrier|upper }}</option>
+          {% endfor %}
+        </select>
+        <label class="block text-xs font-bold text-slate-500">Tracking number</label>
+        <input name="tracking_number" value="{{ order.tracking_number }}" maxlength="80" placeholder="DHL or Hermes tracking number" class="w-full border rounded-xl p-3 text-sm">
+        <p class="text-[11px] text-slate-500">Required when status is Shipped. Customer sees this on their profile.</p>
+        <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Save status</button>
+      </form>
+      {% include '_order_tracking.html' %}
+    </section>
+  </div>
+
+  <section class="bg-white border rounded-2xl overflow-hidden mb-5">
+    <h2 class="font-black text-lg p-5 pb-3">Items</h2>
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr>
+          <th class="px-5 py-2">Product</th>
+          <th>Qty</th>
+          <th>Colour / size</th>
+          <th class="text-right pr-5">Line total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.line_items %}
+        <tr class="border-t">
+          <td class="px-5 py-3 font-bold">{{ item.get('name', 'Item') }}</td>
+          <td>{{ item.get('quantity', 1) }}</td>
+          <td>{{ item.get('selected_color', '') }}{% if item.get('selected_size') %} · {{ item.selected_size }}{% endif %}</td>
+          <td class="text-right pr-5">
+            <span class="price font-bold" data-pkr="{{ item.get('subtotal_with_tax', item.get('subtotal', 0)) }}"></span>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="px-5 py-4 text-slate-500">No line items stored for this order.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <aside class="bg-red-950 text-white rounded-2xl p-6 text-sm space-y-3">
+    <h2 class="font-black text-lg">Totals</h2>
+    <div class="flex justify-between"><span>Subtotal</span><span class="price" data-pkr="{{ order.items_subtotal }}"></span></div>
+    <div class="flex justify-between"><span>Tax {{ tax_percent }}%</span><span class="price" data-pkr="{{ order.tax }}"></span></div>
+    <div class="flex justify-between"><span>Delivery</span><span class="price" data-pkr="{{ order.shipping }}"></span></div>
+    <div class="border-t border-red-800 pt-3 flex justify-between text-base font-black">
+      <span>Total</span><span class="price" data-pkr="{{ order.total }}"></span>
+    </div>
+    <p class="text-[11px] text-red-200">Stored currency: {{ order.currency }}</p>
+  </aside>
+</main>
+{% include '_currency.html' %}
+{% endblock %}

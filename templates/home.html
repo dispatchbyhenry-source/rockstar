@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="max-w-7xl mx-auto px-3 sm:px-4 w-full min-w-0">
+  <section class="my-6 sm:my-8 rounded-3xl p-6 sm:p-10 md:p-14 text-white bg-gradient-to-r from-red-950 via-red-800 to-slate-950">
+    <span class="text-red-300 text-xs font-bold">{{ t('hero_kicker') }}</span>
+    <h1 class="text-3xl sm:text-4xl font-black mt-3">{{ t('hero_title_1') }}<br><span class="text-red-400">{{ t('hero_title_2') }}</span></h1>
+    <p class="max-w-lg text-red-100 text-sm my-5">{{ t('hero_blurb') }}</p>
+    <div class="flex flex-wrap gap-3">
+      <a href="{{ url_for('products') }}" class="inline-block bg-red-600 rounded-xl px-5 py-3 text-xs font-bold">{{ t('shop_now') }}</a>
+      <a href="{{ url_for('products',category='Shoes') }}" class="inline-block border border-red-300 rounded-xl px-5 py-3 text-xs font-bold">{{ t('explore_shoes') }}</a>
+    </div>
+  </section>
+
+  <section>
+    <div class="flex items-end justify-between gap-3 mb-3">
+      <h2 class="text-lg sm:text-xl font-black">{{ t('browse_by_category') }}</h2>
+      <a href="{{ shop_url() }}" class="text-sm font-bold">{{ t('view_all') }}</a>
+    </div>
+    <div class="shop-cats flex gap-5 overflow-x-auto pb-2 text-sm font-bold whitespace-nowrap">
+      {% for group in shop_nav %}
+      <a href="{{ shop_url(main=group.name) }}">{{ group.name }}</a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="my-10 bg-red-950 text-white rounded-3xl p-5 sm:p-7 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+    {% if deal %}
+    <div>
+      <small class="text-red-300 font-bold">{{ t('deal_of_week') }}</small>
+      <h2 class="text-2xl font-black">{{ deal.name }}</h2>
+      {% if deal.volume_max_percent %}
+      <p class="text-[11px] text-red-200 font-bold mt-2">{{ t('basic_price') }}</p>
+      <p class="price text-red-100 text-lg font-black" data-pkr="{{ deal.display_original_price_with_tax }}"></p>
+      <p class="text-[11px] text-red-200 font-bold mt-2">{{ t('from_qty_discount') }}</p>
+      <p class="price text-red-100 text-xl font-black" data-pkr="{{ deal.volume_from_price_with_tax }}"></p>
+      <p class="text-[11px] text-red-200">{{ t('incl_tax', n=tax_percent) }}</p>
+      <p class="price text-red-200 text-sm mt-1" data-pkr="{{ deal.volume_from_price }}"></p>
+      <p class="text-[11px] text-red-300">{{ t('excl_tax') }}</p>
+      {% else %}
+      <p class="price text-red-100 text-xl font-black" data-pkr="{{ deal.display_price_with_tax }}"></p>
+      <p class="text-[11px] text-red-200">{{ t('incl_tax', n=tax_percent) }}</p>
+      <p class="price text-red-200 text-sm mt-1" data-pkr="{{ deal.display_price }}"></p>
+      <p class="text-[11px] text-red-300">{{ t('excl_tax') }}</p>
+      {% endif %}
+    </div>
+    <a class="bg-red-600 px-4 py-3 rounded-xl font-bold text-xs shrink-0 w-full sm:w-auto text-center" href="{{ url_for('product_detail',product_id=deal.id) }}">{{ t('view_deal') }}</a>
+    {% endif %}
+  </section>
+
+  <section>
+    <div class="flex flex-wrap justify-between gap-2 mb-4">
+      <h2 class="text-lg sm:text-xl font-black">{{ t('featured_products') }}</h2>
+      <a href="{{ url_for('products') }}" class="text-red-600 text-sm">{{ t('view_all') }}</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {% for p in products %}{% include '_card.html' %}{% endfor %}
+    </div>
+  </section>
+
+  {% if new_arrivals %}
+  <section class="mt-14">
+    <div class="flex flex-wrap justify-between gap-2 mb-4">
+      <h2 class="text-lg sm:text-xl font-black">{{ t('new_arrivals') }}</h2>
+      <a href="{{ shop_url(new=1) }}" class="text-red-600 text-sm">{{ t('view_all') }}</a>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {% for p in new_arrivals %}{% include '_card.html' %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="my-14">
+    <div class="text-center mb-7">
+      <p class="text-red-600 text-xs font-bold">{{ t('trusted_by') }}</p>
+      <h2 class="text-2xl font-black">{{ t('loved_quality') }}</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5">
+      {% for review in testimonials %}
+      <article class="bg-white border border-red-100 rounded-2xl p-6">
+        <div class="star">{% for _ in range(review.rating) %}★{% endfor %}</div>
+        <p class="text-sm text-slate-600 my-3">“{{ review.body }}”</p>
+        <b class="text-sm">{{ review.name }}</b>
+        <small class="block text-slate-400">{{ t('verified_buyer') }} · {{ review.product_name }}</small>
+      </article>
+      {% else %}
+      <article class="bg-white border border-red-100 rounded-2xl p-6 md:col-span-3 text-center">
+        <p class="text-sm text-slate-500">{{ t('reviews_placeholder') }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="my-14 max-w-3xl mx-auto">
+    <div class="text-center mb-6">
+      <p class="text-red-600 text-xs font-bold">{{ t('help_centre') }}</p>
+      <h2 class="text-2xl font-black">{{ t('faqs_title') }}</h2>
+    </div>
+    {% for faq in faqs %}
+    <details class="bg-white border border-red-100 rounded-xl p-4 mb-3">
+      <summary class="font-bold text-sm cursor-pointer">{{ faq.question }}</summary>
+      <p class="text-sm text-slate-600 mt-3">{{ faq.answer }}</p>
+    </details>
+    {% else %}
+    <p class="text-sm text-slate-500 text-center">{{ t('no_faqs') }}</p>
+    {% endfor %}
+  </section>
+</main>
+{% include '_currency.html' %}
+{% endblock %}

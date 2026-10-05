@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('customer_details') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-4xl mx-auto px-4 py-10 w-full">
+  {% set checkout_step = 3 %}
+  {% include '_checkout_steps.html' %}
+  <h1 class="text-2xl font-black mb-2">{{ t('customer_details') }}</h1>
+  <p class="text-sm text-slate-500 mb-5">{{ t('shipping_shown_for', region=customer_region, source=customer_location_source) }}</p>
+  <div class="grid lg:grid-cols-5 gap-6">
+    <form method="post" id="checkout-details-form" class="lg:col-span-3 bg-white border rounded-2xl p-6 space-y-4">
+      <div class="grid sm:grid-cols-2 gap-3">
+        <input required name="name" value="{{ checkout.name }}" placeholder="{{ t('full_name') }}" class="border rounded-xl p-3 text-sm">
+        <input required type="email" name="email" value="{{ checkout.email }}" placeholder="{{ t('email_address') }}" class="border rounded-xl p-3 text-sm">
+      </div>
+      <textarea required name="address" placeholder="{{ t('street_address') }}" class="w-full border rounded-xl p-3 text-sm">{{ checkout.address }}</textarea>
+      <div>
+        <p class="font-bold text-sm mb-2">{{ t('shipping_method') }}</p>
+        <div class="grid sm:grid-cols-2 gap-3 mb-4">
+          <label class="block border-2 rounded-xl p-4 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+            <input required class="shipping-method accent-red-600" type="radio" name="shipping_method" value="standard" {% if shipping_method != 'express' %}checked{% endif %}>
+            <b class="text-sm ml-1">{{ t('standard_shipping') }}</b>
+          </label>
+          <label class="block border-2 rounded-xl p-4 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+            <input required class="shipping-method accent-red-600" type="radio" name="shipping_method" value="express" {% if shipping_method == 'express' %}checked{% endif %}>
+            <b class="text-sm ml-1">{{ t('express_shipping') }}</b>
+          </label>
+        </div>
+        <p class="font-bold text-sm mb-2">{{ t('shipping_charges') }}</p>
+        <p class="text-xs text-slate-500 mb-3">{{ t('only_your_region', kg='%.2f'|format(cart_weight)) }}</p>
+        <div class="space-y-3">
+          {% for zone in shipping_zones %}
+          <label class="block border-2 rounded-2xl p-4 border-red-600 bg-red-50">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <input required class="shipping-zone accent-red-600" type="radio" name="country" value="{{ zone.name }}" data-standard="{{ zone.standard_amount }}" data-express="{{ zone.express_amount }}" data-under="{{ zone.under_label }}" data-over="{{ zone.over_label }}" data-express-under="{{ zone.express_under_label }}" data-express-over="{{ zone.express_over_label }}" checked>
+                <b class="text-base ml-1">{{ zone.name }}</b>
+              </div>
+              <span class="price zone-price text-sm font-black text-red-700" data-pkr="{{ zone.amount }}"></span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-3 text-xs text-slate-600">
+              <div class="border rounded-xl p-3 bg-white">
+                <span class="block font-bold text-slate-400 uppercase band-under-title">{% if shipping_method == 'express' %}{{ t('express') }} {% endif %}{{ t('under_5kg') }}</span>
+                <span class="block mt-1 font-black text-slate-800 zone-under">{{ zone.express_under_label if shipping_method == 'express' else zone.under_label }}</span>
+              </div>
+              <div class="border rounded-xl p-3 bg-white">
+                <span class="block font-bold text-slate-400 uppercase band-over-title">{% if shipping_method == 'express' %}{{ t('express') }} {% endif %}{{ t('over_5kg') }}</span>
+                <span class="block mt-1 font-black text-slate-800 zone-over">{{ zone.express_over_label if shipping_method == 'express' else zone.over_label }}</span>
+              </div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="flex flex-wrap justify-between items-center gap-3">
+        <a class="text-sm font-bold text-slate-500" href="{{ url_for('checkout_account') if not current_user else url_for('cart') }}">{{ t('back') }}</a>
+        <button type="submit" class="bg-red-600 text-white rounded-xl px-6 py-3 font-bold text-sm w-full sm:w-auto">{{ t('continue_payment') }}</button>
+      </div>
+    </form>
+    {% include '_checkout_totals.html' %}
+  </div>
+</main>
+{% include '_currency.html' %}
+<script>
+const subtotalPkr = {{ total }};
+const itemsTaxPkr = {{ items_tax }};
+const taxPercent = {{ tax_percent }};
+const heavyOrder = {{ 'true' if heavy_order else 'false' }};
+const cartWeight = {{ cart_weight }};
+const i18nShip = {
+  express: {{ t('express')|tojson }},
+  standard: {{ t('standard')|tojson }},
+  under5: {{ t('under_5kg')|tojson }},
+  over5: {{ t('over_5kg')|tojson }},
+  summary: {{ t('delivery_summary')|tojson }}
+};
+function formatMoney(pkr) {
+  return new Intl.NumberFormat(undefined, {style: 'currency', currency}).format(Number(pkr) * rates[currency]);
+}
+function moneyRound(value) {
+  return Math.round(Number(value) * 100) / 100;
+}
+function taxOn(amount) {
+  return moneyRound(Number(amount) * taxPercent / 100);
+}
+function selectedMethod() {
+  return document.querySelector('.shipping-method:checked')?.value || 'standard';
+}
+function updateShippingSummary() {
+  const method = selectedMethod();
+  const express = method === 'express';
+  document.querySelectorAll('.shipping-zone').forEach(input => {
+    const card = input.closest('label');
+    const amount = Number(express ? input.dataset.express : input.dataset.standard);
+    const priceEl = card.querySelector('.zone-price');
+    priceEl.dataset.pkr = amount;
+    priceEl.textContent = formatMoney(amount);
+    card.querySelector('.zone-under').textContent = express ? input.dataset.expressUnder : input.dataset.under;
+    card.querySelector('.zone-over').textContent = express ? input.dataset.expressOver : input.dataset.over;
+    card.querySelector('.band-under-title').textContent = (express ? i18nShip.express + ' ' : '') + i18nShip.under5;
+    card.querySelector('.band-over-title').textContent = (express ? i18nShip.express + ' ' : '') + i18nShip.over5;
+  });
+  const selected = document.querySelector('.shipping-zone:checked');
+  if (!selected) return;
+  const shipping = Number(express ? selected.dataset.express : selected.dataset.standard);
+  const tax = moneyRound(itemsTaxPkr + taxOn(shipping));
+  const currentLabel = heavyOrder
+    ? (express ? selected.dataset.expressOver : selected.dataset.over)
+    : (express ? selected.dataset.expressUnder : selected.dataset.under);
+  const speed = express ? i18nShip.express : i18nShip.standard;
+  const band = heavyOrder ? i18nShip.over5 : i18nShip.under5;
+  document.getElementById('shippingAmount').textContent = formatMoney(shipping);
+  const taxEl = document.getElementById('taxAmount');
+  if (taxEl) {
+    taxEl.dataset.pkr = tax;
+    taxEl.textContent = formatMoney(tax);
+  }
+  document.getElementById('grandAmount').textContent = formatMoney(subtotalPkr + tax + shipping);
+  document.getElementById('shippingMessage').textContent = i18nShip.summary
+    .replace('{zone}', selected.value)
+    .replace('{speed}', speed)
+    .replace('{price}', currentLabel)
+    .replace('{band}', band)
+    .replace('{kg}', cartWeight);
+}
+document.querySelectorAll('.shipping-zone').forEach(input => input.addEventListener('change', updateShippingSummary));
+document.querySelectorAll('.shipping-method').forEach(input => input.addEventListener('change', updateShippingSummary));
+updateShippingSummary();
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('shopping_basket') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-4xl mx-auto px-3 sm:px-4 py-6 sm:py-10 w-full min-w-0">
+  {% set checkout_step = 1 %}
+  {% include '_checkout_steps.html' %}
+  <h1 class="text-2xl font-black mb-2">{{ t('shopping_basket') }}</h1>
+  <p class="text-sm text-slate-500 mb-5">{{ t('shipping_shown_for', region=customer_region, source=customer_location_source) }}</p>
+  {% if items %}
+  <div class="grid lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-3 bg-white rounded-2xl border divide-y">
+      {% for item in items %}
+      <div class="p-4 flex flex-wrap gap-4 items-start sm:items-center">
+        <img src="{{ item.image }}" class="w-16 h-16 rounded-lg object-cover shrink-0" alt="{{ item.name }}">
+        <div class="grow min-w-0">
+          <b class="text-sm">{{ item.name }}</b>
+          <p class="text-xs text-slate-500">{% if item.offer_label %}{{ item.offer_label }} · {% endif %}{% if item.is_virtual %}{{ t('digital_delivery') }}{% else %}{{ t('colour_label') }}: {{ item.selected_color }} · {{ t('size') }}: {{ item.selected_size }}{% if item.weight %} · {{ '%.2f'|format(item.line_weight) }} kg{% endif %}{% endif %}</p>
+          <span class="price text-sm font-bold" data-pkr="{{ item.subtotal }}"></span>
+          {% if item.volume_percent %}
+          <p class="text-[11px] text-red-600 font-bold mt-1">{{ t('volume_discount_line', n='%.0f'|format(item.volume_percent)) }}</p>
+          {% endif %}
+          <div class="flex items-center gap-2 mt-2">
+            <form method="post" action="{{ url_for('update_cart') }}">
+              <input type="hidden" name="cart_key" value="{{ item.cart_key }}">
+              <input type="hidden" name="action" value="dec">
+              <button class="w-8 h-8 border rounded-lg text-sm font-bold">−</button>
+            </form>
+            <span class="text-sm font-black min-w-6 text-center">{{ item.quantity }}</span>
+            <form method="post" action="{{ url_for('update_cart') }}">
+              <input type="hidden" name="cart_key" value="{{ item.cart_key }}">
+              <input type="hidden" name="action" value="inc">
+              <button class="w-8 h-8 border rounded-lg text-sm font-bold">+</button>
+            </form>
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('remove_cart', product_id=item.id) }}">
+          <input type="hidden" name="cart_key" value="{{ item.cart_key }}">
+          <button class="text-red-600 text-xs font-bold">{{ t('remove') }}</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% include '_checkout_totals.html' %}
+  </div>
+  <div class="mt-6 flex justify-end">
+    <a class="bg-red-600 text-white rounded-xl px-6 py-3 font-bold text-sm w-full sm:w-auto text-center" href="{{ url_for('checkout_account') }}">{{ t('continue_checkout') }}</a>
+  </div>
+  {% else %}
+  <div class="bg-white border rounded-2xl p-10 text-center">
+    <p>{{ t('cart_empty') }}</p>
+    <a class="inline-block mt-4 bg-red-600 text-white px-4 py-2 rounded-xl text-sm" href="{{ url_for('products') }}">{{ t('shop_products') }}</a>
+  </div>
+  {% endif %}
+</main>
+{% include '_currency.html' %}
+{% endblock %}

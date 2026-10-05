@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.name }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-10 w-full min-w-0">
+  <section class="bg-white border border-red-100 rounded-3xl p-4 sm:p-5 md:p-9 grid md:grid-cols-2 gap-6 sm:gap-8">
+    <div>
+      <img id="mainProductImage" src="{{ product.image or (product.gallery[0] if product.gallery else '') }}" alt="{{ product.name }}" class="w-full h-64 sm:h-96 rounded-2xl object-cover transition">
+      <div class="flex flex-wrap gap-2 mt-3">
+        {% for image in product.gallery %}
+        <button type="button" data-image="{{ image }}" class="gallery-thumb border-2 border-transparent hover:border-red-600 rounded-lg overflow-hidden">
+          <img src="{{ image }}" class="w-16 h-16 object-cover" alt="">
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <div class="flex flex-wrap justify-between gap-2 text-xs">
+        <div class="flex flex-wrap gap-1">
+          {% for main_name in product.main_categories %}
+          <a href="{{ url_for('products', main=main_name, sub=product.sub_category or product.category, sub2=product.sub_category_2, sub3=product.sub_category_3, sub4=product.sub_category_4) }}" class="bg-red-50 text-red-700 font-bold px-3 py-1 rounded-full">{{ main_name }}{% if product.sub_categories_label or product.sub_category or product.category %} · {{ product.sub_categories_label or product.sub_category or product.category }}{% endif %}</a>
+          {% endfor %}
+        </div>
+        <span>SKU: {{ product.sku }}</span>
+      </div>
+      {% if product.brand %}<p class="text-sm text-slate-500 font-bold uppercase tracking-wide mt-4">{{ product.brand }}</p>{% endif %}
+      <h1 class="text-2xl sm:text-3xl font-black {% if product.brand %}mt-1{% else %}mt-4{% endif %} break-words">{{ product.name }}</h1>
+      <p class="text-xs text-slate-500 mt-1">{% if product.gender_label %}{{ product.gender_label }} · {% endif %}{% if product.is_virtual %}Virtual · {% endif %}{{ product.product_type }}</p>
+      <p class="star text-sm my-2">{{ product.stars }} <b class="text-slate-700">{{ product.rating }}/5</b> <a href="#reviews" class="text-slate-400">{{ t('reviews_n', n=product.reviews_count) }}</a></p>
+      <form method="post" action="{{ url_for('like_product', product_id=product.id) }}" class="mb-3">
+        <button class="text-sm font-bold {% if product.id in liked_ids %}text-red-600{% else %}text-slate-500{% endif %}">
+          <i class="fa-{{ 'solid' if product.id in liked_ids else 'regular' }} fa-heart text-red-600"></i>
+          {{ t('likes_n', n=product.likes) }}{% if product.id in liked_ids %} · {{ t('liked') }}{% endif %}
+        </button>
+      </form>
+      <div class="my-4">
+        <div id="basicPriceBlock" class="{% if not product.volume_max_percent %}hidden{% endif %} mb-3">
+          <p class="text-xs text-red-600 font-bold">{{ t('basic_price') }}</p>
+          <p id="basicGrossPrice" class="price text-xl font-black text-red-600" data-pkr="{{ product.display_original_price_with_tax }}"></p>
+        </div>
+        <p id="volumeFromLabel" class="text-xs text-red-600 font-bold {% if not product.volume_max_percent %}hidden{% endif %}">{{ t('your_price') }}</p>
+        {% if product.offer_label %}
+        <p class="text-xs font-bold uppercase text-slate-500 mb-1">{{ product.offer_label }}</p>
+        {% endif %}
+        <h2 id="productUnitPrice" class="price text-3xl font-black" data-pkr="{{ product.display_price_with_tax }}"></h2>
+        <p class="text-xs text-slate-500 mt-1">{{ t('incl_tax', n=tax_percent) }}</p>
+        <p id="productNetPrice" class="price text-sm text-slate-500 mt-2" data-pkr="{{ product.display_price }}"></p>
+        <p class="text-xs text-slate-400">{{ t('excl_tax') }}</p>
+        <p id="volumePriceNote" class="text-xs text-slate-500 mt-1"></p>
+      </div>
+      {% if product.volume_tiers %}
+      <div class="border border-red-100 rounded-2xl p-4 mb-4">
+        <b class="text-sm">{{ t('volume_discount') }}</b>
+        <p class="text-xs text-slate-500 mb-3">{{ t('volume_hint') }}</p>
+        <div class="space-y-2">
+          {% for tier in product.volume_tiers %}
+          <div class="flex justify-between gap-3 text-sm volume-tier" data-min="{{ tier.min }}" data-percent="{{ tier.percent }}" data-price="{{ tier.unit_price }}">
+            <span>{{ t('from_n_items', n=tier.min) }}</span>
+            <span class="text-right">
+              <b class="price" data-pkr="{{ tier.unit_price_with_tax }}"></b>
+              <small class="block text-slate-400">{{ t('incl_tax', n=tax_percent) }}{% if tier.percent %} · {{ t('percent_off', n='%.0f'|format(tier.percent)) }}{% endif %}</small>
+              <small class="price block text-slate-400" data-pkr="{{ tier.unit_price }}"></small>
+              <small class="block text-slate-400">{{ t('excl_tax') }}</small>
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% if product.weight or product.packing_weight %}
+      <p class="text-sm text-slate-500 mb-3">{{ t('weight_label') }}: {{ '%.2f'|format(product.weight or 0) }} kg{% if product.packing_weight %} · {{ t('packing_label') }}: {{ '%.2f'|format(product.packing_weight) }} kg{% endif %}</p>
+      {% endif %}
+      <p class="text-sm text-slate-600 whitespace-pre-line">{{ product.description }}</p>
+      {% if product.product_tags or product.product_hashtags %}
+      <div class="flex flex-wrap gap-2 mt-3">
+        {% for tag in product.product_tags %}
+        <a href="{{ url_for('products', search=tag) }}" class="text-[11px] font-bold bg-slate-100 text-slate-700 px-2 py-1 rounded-lg">{{ tag }}</a>
+        {% endfor %}
+        {% for tag in product.product_hashtags %}
+        <a href="{{ url_for('products', search=tag) }}" class="text-[11px] font-bold bg-red-50 text-red-700 px-2 py-1 rounded-lg">{{ tag }}</a>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <form action="{{ url_for('add_cart',product_id=product.id) }}" method="post" class="mt-5 space-y-5">
+        <input type="hidden" name="offer_gender" value="{{ product.offer_gender }}">
+        {% if product.is_virtual %}
+        <p class="text-sm text-slate-500">{{ t('digital_delivery') }}</p>
+        {% else %}
+        <div>
+          <b class="text-xs uppercase text-slate-500">{{ t('colour_stock') }}</b>
+          <div class="mt-2 flex flex-wrap gap-2">
+            {% for color in product.color_rows %}
+            <label class="cursor-pointer">
+              <input required class="peer sr-only color-choice" type="radio" name="color" value="{{ color.name }}" {% if color.quantity|int <= 0 %}disabled{% endif %}>
+              <span class="block border-2 rounded-xl px-4 py-3 text-sm font-bold peer-checked:border-red-600 peer-checked:bg-red-50 peer-disabled:opacity-40">{{ color.name }} · {{ t('left_n', n=color.quantity) }}</span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div>
+          <b class="text-xs uppercase text-slate-500">{{ t('size') }}</b>
+          <div class="mt-2 flex flex-wrap gap-2">
+            {% for size in product.size_rows %}
+            <label class="cursor-pointer">
+              <input required class="peer sr-only size-choice" type="radio" name="size" value="{{ size }}">
+              <span class="size-label block min-w-20 text-center border-2 rounded-xl px-3 py-3 text-sm font-black peer-checked:border-red-600 peer-checked:bg-red-50 peer-disabled:opacity-40">{{ size }}</span>
+            </label>
+            {% endfor %}
+          </div>
+          <p id="variantStockMessage" class="text-xs text-slate-500 mt-2"></p>
+        </div>
+        {% endif %}
+
+        <div>
+          <b class="text-xs uppercase text-slate-500">{{ t('quantity') }}</b>
+          <input required type="number" min="1" name="quantity" id="productQuantity" value="1" class="w-28 border rounded-xl p-3 text-sm mt-2">
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          <button name="intent" value="cart" class="w-full bg-red-600 text-white font-bold rounded-xl py-3 text-sm">{{ t('add_to_cart') }}</button>
+          <button name="intent" value="buy" class="w-full border border-red-600 text-red-700 font-bold rounded-xl py-3 text-sm">{{ t('buy_now') }}</button>
+          {% if product.has_marketplace_links %}
+          {% if product.ebay_url %}
+          <a target="_blank" rel="noopener" href="{{ product.ebay_url }}" class="w-full text-center border border-slate-300 rounded-xl py-3 text-sm font-bold hover:bg-slate-50">{{ t('check_ebay') }}</a>
+          {% endif %}
+          {% else %}
+          <button type="button" id="missingPlatforms" class="w-full text-center border border-slate-300 rounded-xl py-3 text-sm font-bold">{{ t('check_other_platforms') }}</button>
+          {% endif %}
+        </div>
+        {% if product.has_marketplace_links %}
+        <div class="grid sm:grid-cols-2 gap-3">
+          {% if product.amazon_url %}
+          <a target="_blank" rel="noopener" href="{{ product.amazon_url }}" class="w-full text-center border border-amber-300 text-amber-800 rounded-xl py-3 text-sm font-bold hover:bg-amber-50">{{ t('check_amazon') }}</a>
+          {% endif %}
+          {% if product.etsy_url %}
+          <a target="_blank" rel="noopener" href="{{ product.etsy_url }}" class="w-full text-center border border-orange-300 text-orange-800 rounded-xl py-3 text-sm font-bold hover:bg-orange-50">{{ t('check_etsy') }}</a>
+          {% endif %}
+        </div>
+        {% else %}
+        <p id="missingPlatformsMessage" class="hidden text-sm text-red-600">{{ t('not_on_other_platforms') }}</p>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  <section id="reviews" class="mt-8 grid lg:grid-cols-2 gap-6">
+    <div class="bg-white border rounded-2xl p-6">
+      <h2 class="font-black text-xl">{{ t('customer_reviews') }}</h2>
+      {% for review in reviews %}
+      <article class="border-b py-4">
+        <span class="star">{% for _ in range(review.rating) %}★{% endfor %}</span>
+        <b class="text-sm ml-2">{{ review.name }}</b>
+        <small class="text-slate-400 ml-2">{{ review.created_at }}</small>
+        <p class="text-sm text-slate-600 mt-2">{{ review.body }}</p>
+      </article>
+      {% else %}
+      <p class="text-sm text-slate-500 mt-3">{{ t('first_review') }}</p>
+      {% endfor %}
+    </div>
+    <form action="{{ url_for('add_review',product_id=product.id) }}" method="post" class="bg-white border rounded-2xl p-6 space-y-3">
+      <h2 class="font-black text-xl">{{ t('write_review') }}</h2>
+      <input required name="name" placeholder="{{ t('your_name') }}" class="w-full border rounded-xl p-3 text-sm">
+      <select name="rating" class="w-full border rounded-xl p-3 text-sm">
+        <option value="5">{{ t('stars_5') }}</option>
+        <option value="4">{{ t('stars_4') }}</option>
+        <option value="3">{{ t('stars_3') }}</option>
+        <option value="2">{{ t('stars_2') }}</option>
+        <option value="1">{{ t('stars_1') }}</option>
+      </select>
+      <textarea required name="body" rows="4" placeholder="{{ t('review_placeholder') }}" class="w-full border rounded-xl p-3 text-sm"></textarea>
+      <button class="bg-red-600 text-white rounded-xl px-5 py-3 font-bold text-sm">{{ t('publish_review') }}</button>
+    </form>
+  </section>
+
+  {% if related %}
+  <section class="mt-10">
+    <h2 class="font-black text-xl mb-4">{{ t('you_may_like') }}</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {% for p in related %}{% include '_card.html' %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</main>
+{% include '_currency.html' %}
+<script>
+document.querySelectorAll('.gallery-thumb').forEach(b => b.onclick = () => document.getElementById('mainProductImage').src = b.dataset.image);
+const i18nProduct = {
+  left: {{ t('left_n', n='__N__')|tojson }},
+  itemsLeft: {{ t('items_left_variant', n='__N__')|tojson }},
+  soldOut: {{ t('colour_sold_out')|tojson }},
+  fromOff: {{ t('from_items_off', min='__MIN__', n='__N__')|tojson }}
+};
+const variantStock = {{ product.color_rows|tojson }};
+const colorChoices = [...document.querySelectorAll('.color-choice')];
+const sizeChoices = [...document.querySelectorAll('.size-choice')];
+const stockMessage = document.getElementById('variantStockMessage');
+
+function updateSizeStock() {
+  const selectedColor = colorChoices.find(input => input.checked);
+  const color = variantStock.find(entry => selectedColor && entry.name === selectedColor.value);
+  sizeChoices.forEach(input => {
+    const available = color ? Number(color.sizes[input.value] || 0) : 0;
+    input.disabled = available <= 0;
+    input.nextElementSibling.textContent = `${input.value} · ${i18nProduct.left.replace('__N__', available)}`;
+    if (input.checked && input.disabled) input.checked = false;
+  });
+  const selectedSize = sizeChoices.find(input => input.checked && !input.disabled);
+  const firstAvailable = sizeChoices.find(input => !input.disabled);
+  if (!selectedSize && firstAvailable) firstAvailable.checked = true;
+  const activeSize = sizeChoices.find(input => input.checked);
+  const remaining = activeSize && color ? Number(color.sizes[activeSize.value] || 0) : 0;
+  stockMessage.textContent = activeSize ? i18nProduct.itemsLeft.replace('__N__', remaining) : i18nProduct.soldOut;
+}
+
+colorChoices.forEach(input => input.addEventListener('change', updateSizeStock));
+sizeChoices.forEach(input => input.addEventListener('change', updateSizeStock));
+const firstAvailableColor = colorChoices.find(input => !input.disabled);
+if (firstAvailableColor) {
+  firstAvailableColor.checked = true;
+  updateSizeStock();
+}
+const missing = document.getElementById('missingPlatforms');
+if (missing) {
+  missing.addEventListener('click', () => document.getElementById('missingPlatformsMessage').classList.remove('hidden'));
+}
+const qtyInput = document.getElementById('productQuantity');
+const unitPrice = document.getElementById('productUnitPrice');
+const netPrice = document.getElementById('productNetPrice');
+const volumeNote = document.getElementById('volumePriceNote');
+const basicPriceBlock = document.getElementById('basicPriceBlock');
+const volumeFromLabel = document.getElementById('volumeFromLabel');
+const volumeTiers = {{ product.volume_tiers|tojson }};
+const taxPercent = {{ tax_percent }};
+function formatPkr(value) {
+  return new Intl.NumberFormat(undefined, {style: 'currency', currency}).format(Number(value) * rates[currency]);
+}
+function updateVolumePrice() {
+  if (!qtyInput || !volumeTiers.length) return;
+  const qty = Math.max(1, Number(qtyInput.value || 1));
+  let active = volumeTiers[0];
+  volumeTiers.forEach(tier => { if (qty >= Number(tier.min)) active = tier; });
+  const net = Number(active.unit_price);
+  const gross = Number(active.unit_price_with_tax != null ? active.unit_price_with_tax : Math.round((net + net * taxPercent / 100) * 100) / 100);
+  unitPrice.dataset.pkr = gross;
+  unitPrice.textContent = formatPkr(gross);
+  if (netPrice) {
+    netPrice.dataset.pkr = net;
+    netPrice.textContent = formatPkr(net);
+  }
+  const discounted = Number(active.percent) > 0;
+  if (basicPriceBlock) {
+    basicPriceBlock.classList.toggle('hidden', !discounted);
+  }
+  if (volumeFromLabel) {
+    volumeFromLabel.classList.toggle('hidden', !discounted);
+  }
+  volumeNote.textContent = discounted
+    ? i18nProduct.fromOff.replace('__MIN__', active.min).replace('__N__', Number(active.percent).toFixed(0))
+    : '';
+  document.querySelectorAll('.volume-tier').forEach(row => {
+    row.classList.toggle('bg-red-50', Number(row.dataset.min) === Number(active.min));
+    row.classList.toggle('rounded-xl', Number(row.dataset.min) === Number(active.min));
+    row.classList.toggle('px-2', Number(row.dataset.min) === Number(active.min));
+    row.classList.toggle('py-1', Number(row.dataset.min) === Number(active.min));
+  });
+}
+if (qtyInput) {
+  qtyInput.addEventListener('input', updateVolumePrice);
+  updateVolumePrice();
+}
+</script>
+{% endblock %}

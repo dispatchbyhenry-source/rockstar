@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Main categories | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-10 w-full">
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-black">Main categories</h1>
+    <a href="{{ back_url }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+  <section class="bg-white border rounded-2xl p-5">
+    <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 mb-4">
+      <input type="hidden" name="action" value="add">
+      <input required name="name" maxlength="40" placeholder="New main category, e.g. Men" class="border rounded-xl p-3 text-sm grow">
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Add main category</button>
+    </form>
+    <div class="space-y-3">
+      {% for category in categories %}
+      <div class="flex flex-wrap gap-2 items-center border-t pt-3">
+        <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 grow">
+          <input type="hidden" name="action" value="rename">
+          <input type="hidden" name="category_id" value="{{ category.id }}">
+          <input required name="name" value="{{ category.name }}" maxlength="40" class="border rounded-xl p-2 text-sm grow min-w-[160px]">
+          <button class="text-red-600 text-sm font-bold">Save</button>
+        </form>
+        <form method="post" action="{{ save_url }}" onsubmit="return confirm('Delete this main category?')">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="category_id" value="{{ category.id }}">
+          <button class="text-slate-500 text-sm">Delete</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No main categories yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

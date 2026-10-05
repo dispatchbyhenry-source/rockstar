@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Listing Team Login | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-md mx-auto px-4 py-16 w-full">
+  <div class="bg-white border rounded-2xl p-8">
+    <h1 class="text-2xl font-black mb-6 text-center">Listing Team Login</h1>
+    <form method="post" class="space-y-4">
+      {{ csrf_field() }}
+      <div>
+        <label class="block text-sm font-bold mb-1">Username</label>
+        <input type="text" name="username" required autocomplete="username" placeholder="e.g. username" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Password</label>
+        <input type="password" name="password" required class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <button type="submit" class="w-full bg-red-600 text-white rounded-xl px-6 py-3 text-sm font-bold">Sign In</button>
+    </form>
+  </div>
+</main>
+{% endblock %}

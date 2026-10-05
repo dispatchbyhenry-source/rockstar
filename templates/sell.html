@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('become_partner') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-10 w-full space-y-6">
+  <section class="bg-white border border-red-100 rounded-3xl p-7">
+    <h1 class="text-2xl font-black">{{ t('become_our_partner') }}</h1>
+    <p class="text-sm text-slate-500 mt-2">{{ t('signed_in_as', name=user.name, email=user.email) }}</p>
+  </section>
+
+  <section class="bg-white border border-red-100 rounded-3xl p-7">
+    <h2 class="text-lg font-black">{{ t('sell_on_site_q') }}</h2>
+    <div class="flex flex-wrap gap-3 mt-4">
+      <a href="{{ url_for('sell_seller') }}" class="bg-red-600 text-white rounded-xl px-6 py-3 text-sm font-bold">{{ t('yes') }}</a>
+      <a href="{{ url_for('sell', seller='no') }}" class="border rounded-xl px-6 py-3 text-sm font-bold">{{ t('no') }}</a>
+    </div>
+  </section>
+
+  <section class="bg-white border border-red-100 rounded-3xl p-7">
+    <h2 class="text-lg font-black">{{ t('dropship_q') }}</h2>
+    <div class="flex flex-wrap gap-3 mt-4">
+      <a href="{{ url_for('sell_dropship') }}" class="bg-red-600 text-white rounded-xl px-6 py-3 text-sm font-bold">{{ t('yes') }}</a>
+      <a href="{{ url_for('sell', dropship='no') }}" class="border rounded-xl px-6 py-3 text-sm font-bold">{{ t('no') }}</a>
+    </div>
+  </section>
+
+  <section class="bg-white border border-red-100 rounded-3xl p-7">
+    <h2 class="text-lg font-black mb-4">{{ t('your_applications') }}</h2>
+    {% for item in applications %}
+    <article class="border-t py-4 text-sm">
+      <div class="flex justify-between gap-3">
+        <b>{{ item.kind_label }}{% if item.product_name %} · {{ item.product_name }}{% endif %}</b>
+        <span class="text-xs font-bold {% if item.status=='approved' %}text-emerald-700{% elif item.status=='rejected' %}text-red-600{% else %}text-amber-700{% endif %}">
+          {% if item.status=='pending' %}{{ t('waiting_approval') }}{% else %}{{ t(item.status) }}{% endif %}
+        </span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">{{ item.full_name }} · {{ item.email }} · {{ item.country }}</p>
+    </article>
+    {% else %}
+    <p class="text-sm text-slate-500">{{ t('no_applications') }}</p>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

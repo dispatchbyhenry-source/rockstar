@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}FAQs | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-10 w-full">
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-black">Homepage FAQs</h1>
+    <a href="{{ back_url }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+  <section class="bg-white border rounded-2xl p-5">
+    <form method="post" class="space-y-2 mb-5">
+      <input type="hidden" name="action" value="add">
+      <input required name="question" maxlength="200" placeholder="Question" class="w-full border rounded-xl p-3 text-sm">
+      <textarea required name="answer" maxlength="2000" rows="3" placeholder="Answer" class="w-full border rounded-xl p-3 text-sm"></textarea>
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Add FAQ</button>
+    </form>
+    <div class="space-y-4">
+      {% for faq in faqs %}
+      <div class="border-t pt-4">
+        <form method="post" class="space-y-2">
+          <input type="hidden" name="action" value="save">
+          <input type="hidden" name="faq_id" value="{{ faq.id }}">
+          <input required name="question" value="{{ faq.question }}" maxlength="200" class="w-full border rounded-xl p-2 text-sm">
+          <textarea required name="answer" maxlength="2000" rows="3" class="w-full border rounded-xl p-2 text-sm">{{ faq.answer }}</textarea>
+          <button class="text-red-600 text-sm font-bold">Save</button>
+        </form>
+        <form method="post" class="mt-1" onsubmit="return confirm('Delete this FAQ?')">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="faq_id" value="{{ faq.id }}">
+          <button class="text-slate-500 text-sm">Delete</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No FAQs yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

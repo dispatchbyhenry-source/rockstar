@@ -1,0 +1,20 @@
+{% set steps = [('new', t('status_new')), ('processing', t('status_processing')), ('shipped', t('status_shipped'))] %}
+<ol class="grid grid-cols-3 gap-2 mt-3">
+  {% for key, label in steps %}
+  <li class="rounded-lg px-2 py-2 text-center text-[10px] font-black uppercase tracking-wide
+    {% if loop.index0 < order.status_index %}bg-red-100 text-red-700
+    {% elif loop.index0 == order.status_index %}bg-red-600 text-white
+    {% else %}bg-slate-100 text-slate-400{% endif %}">
+    {{ label }}
+  </li>
+  {% endfor %}
+</ol>
+{% if order.tracking_number %}
+<p class="text-xs mt-3">
+  <span class="font-bold">{{ order.tracking_label or t('tracking') }}</span>
+  <span class="text-slate-600">{{ order.tracking_number }}</span>
+  {% if order.tracking_url %}
+  <a class="text-red-600 font-bold ml-2" href="{{ order.tracking_url }}" target="_blank" rel="noopener">{{ t('track') }}</a>
+  {% endif %}
+</p>
+{% endif %}

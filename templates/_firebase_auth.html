@@ -1,0 +1,141 @@
+<meta name="csrf-token" content="{{ csrf_token }}">
+<p id="firebaseStatus" class="text-sm text-slate-600"></p>
+<div class="space-y-3">
+  <button type="button" id="googleSignIn" class="w-full border rounded-xl py-3 text-sm font-bold" {% if not firebase_server %}disabled{% endif %}>{{ t('continue_google') }}</button>
+  <button type="button" id="facebookSignIn" class="w-full border rounded-xl py-3 text-sm font-bold" {% if not firebase_server %}disabled{% endif %}>{{ t('continue_facebook') }}</button>
+</div>
+<p class="text-center text-xs text-slate-400">or email</p>
+<form id="firebaseEmailForm" class="space-y-4">
+  {% if mode == 'register' %}
+  <input required name="name" maxlength="100" placeholder="{{ t('full_name') }}" class="w-full border rounded-xl p-3 text-sm">
+  {% endif %}
+  <input required type="email" name="email" placeholder="{{ t('email_address') }}" class="w-full border rounded-xl p-3 text-sm">
+  <input required type="password" name="password" minlength="6" placeholder="{{ t('password_min') }}" class="w-full border rounded-xl p-3 text-sm">
+  <button id="firebaseEmailSubmit" class="w-full bg-red-600 text-white font-bold py-3 rounded-xl" {% if not firebase_server %}disabled{% endif %}>{{ t('create_profile') if mode == 'register' else t('sign_in') }}</button>
+</form>
+{% if mode == 'login' %}
+<button type="button" id="firebaseReset" class="w-full text-xs font-bold text-red-700">{{ t('email_reset_link') }}</button>
+{% endif %}
+<p class="text-xs text-slate-500">{{ t('check_verification_email') }} Account emails come from Firebase. Admin and merchant codes still use Gmail SMTP.</p>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup,
+  GoogleAuthProvider, FacebookAuthProvider, sendEmailVerification, sendPasswordResetEmail,
+  updateProfile, signOut
+} from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+
+const config = {{ firebase|tojson }};
+const mode = {{ mode|tojson }};
+const nextUrl = {{ next|tojson }};
+const signedOut = {{ (signed_out or false)|tojson }};
+const serverReady = {{ (firebase_server or false)|tojson }};
+const status = document.getElementById("firebaseStatus");
+const auth = getAuth(initializeApp(config));
+const continueUrl = window.location.origin + "/login";
+
+function show(message) {
+  if (status) status.textContent = message || "";
+}
+
+function friendly(error) {
+  const code = (error && error.code) || "";
+  const known = {
+    "auth/email-already-in-use": "An account with that email already exists. Sign in instead.",
+    "auth/invalid-email": "Enter a valid email address.",
+    "auth/weak-password": "Use a password with at least 6 characters.",
+    "auth/wrong-password": "Incorrect email or password.",
+    "auth/invalid-credential": "Incorrect email or password.",
+    "auth/user-not-found": "Incorrect email or password.",
+    "auth/popup-closed-by-user": "Sign-in was cancelled.",
+    "auth/account-exists-with-different-credential": "That email is already used with a different sign-in method.",
+    "auth/operation-not-allowed": "Turn this sign-in method on in Firebase Authentication.",
+    "auth/unauthorized-domain": "Add this site under Firebase Authentication → Settings → Authorized domains.",
+  };
+  return known[code] || (error && error.message) || "Sign-in failed.";
+}
+
+async function exchange(user) {
+  const idToken = await user.getIdToken(true);
+  const response = await fetch("/auth/firebase", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+    },
+    body: JSON.stringify({ id_token: idToken, next: nextUrl }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || "The shop could not start your session.");
+  }
+  window.location = data.redirect || "/profile";
+}
+
+async function requireVerified(user) {
+  await user.reload();
+  if (user.emailVerified) return true;
+  await sendEmailVerification(user, { url: continueUrl, handleCodeInApp: false });
+  await signOut(auth);
+  show("Check your inbox for the Firebase verification link, then sign in.");
+  return false;
+}
+
+async function providerSignIn(provider) {
+  if (!serverReady) return;
+  show("");
+  try {
+    const cred = await signInWithPopup(auth, provider);
+    if (!(await requireVerified(cred.user))) return;
+    await exchange(cred.user);
+  } catch (error) {
+    show(friendly(error));
+  }
+}
+
+if (signedOut) {
+  signOut(auth).catch(() => {});
+}
+
+document.getElementById("googleSignIn")?.addEventListener("click", () => providerSignIn(new GoogleAuthProvider()));
+document.getElementById("facebookSignIn")?.addEventListener("click", () => providerSignIn(new FacebookAuthProvider()));
+
+document.getElementById("firebaseEmailForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!serverReady) return;
+  const form = event.currentTarget;
+  const email = form.email.value.trim();
+  const password = form.password.value;
+  const name = form.name ? form.name.value.trim() : "";
+  show("");
+  try {
+    if (mode === "register") {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      if (name) await updateProfile(cred.user, { displayName: name });
+      await sendEmailVerification(cred.user, { url: continueUrl, handleCodeInApp: false });
+      await signOut(auth);
+      show("Account created. Open the Firebase verification email, then sign in.");
+      return;
+    }
+    const cred = await signInWithEmailAndPassword(auth, email, password);
+    if (!(await requireVerified(cred.user))) return;
+    await exchange(cred.user);
+  } catch (error) {
+    show(friendly(error));
+  }
+});
+
+document.getElementById("firebaseReset")?.addEventListener("click", async () => {
+  const email = document.querySelector("#firebaseEmailForm input[name=email]")?.value.trim();
+  if (!email) {
+    show("Enter your email first.");
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email, { url: continueUrl, handleCodeInApp: false });
+    show("If that account exists, Firebase sent a password reset email.");
+  } catch (error) {
+    show(friendly(error));
+  }
+});
+</script>

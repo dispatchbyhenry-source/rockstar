@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('catalog') }}{% if catalog_title %} · {{ catalog_title }}{% endif %} | AR Shopping World{% endblock %}
+{% block content %}
+{% macro nav_link(href, label, active, extra='') %}
+<a href="{{ href }}" class="block py-1.5 text-sm leading-snug {{ extra }} {% if active %}font-black text-red-700{% else %}text-slate-700 hover:text-red-700{% endif %}">{{ label }}</a>
+{% endmacro %}
+{% macro category_sidebar() %}
+<nav class="text-sm">
+  <p class="text-[11px] font-black tracking-[0.2em] text-slate-400 uppercase mb-3">{{ t('categories') }}</p>
+  {{ nav_link(shop_url(), t('all_products'), not selected_main and not selected_sale and not selected_new and selected=='All') }}
+  {{ nav_link(shop_url( sale=1), t('sale'), selected_sale) }}
+  {{ nav_link(shop_url( new=1), t('new_arrivals'), selected_new) }}
+  <div class="border-t border-red-100 my-3"></div>
+  {% for group in shop_nav %}
+  <div class="mb-3">
+    {{ nav_link(shop_url( main=group.name), group.name, selected_main==group.name and not selected_sub, 'font-bold') }}
+    {{ nav_link(shop_url( main=group.name), t('all_name', name=group.name), selected_main==group.name and not selected_sub, 'pl-3 text-[13px] text-slate-500') }}
+    {% for sub in group.subs %}
+    {{ nav_link(shop_url( main=group.name, sub=sub), sub, selected_main==group.name and selected_sub==sub and not selected_sub2, 'pl-3') }}
+    {% if selected_main==group.name and selected_sub==sub %}
+      {% for sub2 in group.sub2_map.get(sub, []) %}
+      {{ nav_link(shop_url( main=group.name, sub=sub, sub2=sub2), sub2, selected_sub2==sub2 and not selected_sub3, 'pl-6 text-[13px] text-slate-600') }}
+      {% if selected_sub2==sub2 %}
+        {% for sub3 in group.sub3_map.get(sub, {}).get(sub2, []) %}
+        {{ nav_link(shop_url( main=group.name, sub=sub, sub2=sub2, sub3=sub3), sub3, selected_sub3==sub3 and not selected_sub4, 'pl-9 text-[13px] text-slate-500') }}
+        {% if selected_sub3==sub3 %}
+          {% for sub4 in group.sub4_map.get(sub, {}).get(sub2, {}).get(sub3, []) %}
+          {{ nav_link(shop_url( main=group.name, sub=sub, sub2=sub2, sub3=sub3, sub4=sub4), sub4, selected_sub4==sub4, 'pl-12 text-[13px] text-slate-500') }}
+          {% endfor %}
+        {% endif %}
+        {% endfor %}
+      {% endif %}
+      {% endfor %}
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endfor %}
+</nav>
+{% endmacro %}
+<main class="max-w-7xl mx-auto w-full px-3 sm:px-4 py-6 sm:py-9 min-w-0">
+  <div class="flex flex-wrap items-end justify-between gap-3 mb-5">
+    <div>
+      <h1 class="text-2xl font-black">{{ t('shop_catalog') }}{% if catalog_title %}: {{ catalog_title }}{% endif %}</h1>
+      <p class="text-slate-500 text-sm mt-1">{{ t('items_n', n=products|length) }} · {{ t('catalog_hint') }}</p>
+    </div>
+    <button type="button" id="openCatalogFilters" class="lg:hidden border border-red-100 bg-white rounded-xl px-4 py-2 text-xs font-black">{{ t('filters') }}</button>
+  </div>
+
+  <div class="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-10 lg:items-start">
+    <aside class="hidden lg:block sticky top-28 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 border-r border-red-100">
+      {{ category_sidebar() }}
+    </aside>
+
+    <div id="catalogFilterDrawer" class="fixed inset-0 z-[60] hidden lg:hidden">
+      <button type="button" id="closeCatalogFiltersBg" class="absolute inset-0 bg-black/40" aria-label="{{ t('close') }}"></button>
+      <div class="absolute left-0 top-0 h-full w-[min(20rem,88vw)] bg-white shadow-2xl overflow-y-auto p-5">
+        <div class="flex items-center justify-between mb-4">
+          <b class="font-black">{{ t('filters') }}</b>
+          <button type="button" id="closeCatalogFilters" class="text-xs font-bold text-red-700">{{ t('close') }}</button>
+        </div>
+        {{ category_sidebar() }}
+      </div>
+    </div>
+
+    <section class="min-w-0">
+      {% macro filter_pill(label, active) %}
+      <summary class="list-none [&::-webkit-details-marker]:hidden cursor-pointer select-none inline-flex items-center gap-1.5 rounded-full border bg-white px-4 py-2 text-sm font-medium {{ 'border-slate-900' if active else 'border-slate-300' }}">
+        {{ label }} <span class="text-[10px] text-slate-500">▾</span>
+      </summary>
+      {% endmacro %}
+      {% macro filter_menu() %}
+      <div class="absolute z-30 mt-2 min-w-[13rem] max-h-72 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-lg text-sm">
+        {{ caller() }}
+      </div>
+      {% endmacro %}
+      {% macro filter_option(href, label, active) %}
+      <a href="{{ href }}" class="block rounded-lg px-3 py-2 hover:bg-red-50 {{ 'font-black text-red-700' if active else 'text-slate-700' }}">{{ label }}</a>
+      {% endmacro %}
+      <div class="flex flex-wrap gap-2 mb-5">
+        <details class="relative">
+          {{ filter_pill(t('sort_by'), selected_sort) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(sort=''), t('sort_recommended'), not selected_sort) }}
+          {{ filter_option(catalog_url(sort='price_asc'), t('sort_price_asc'), selected_sort=='price_asc') }}
+          {{ filter_option(catalog_url(sort='price_desc'), t('sort_price_desc'), selected_sort=='price_desc') }}
+          {{ filter_option(catalog_url(sort='newest', new='1'), t('sort_newest'), selected_sort=='newest' or selected_new) }}
+          {{ filter_option(catalog_url(sort='rating'), t('sort_rating'), selected_sort=='rating') }}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('price'), selected_price) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(price=''), t('clear_filter'), not selected_price) }}
+          {{ filter_option(catalog_url(price='0-25'), t('price_under_25'), selected_price=='0-25') }}
+          {{ filter_option(catalog_url(price='25-50'), t('price_25_50'), selected_price=='25-50') }}
+          {{ filter_option(catalog_url(price='50-100'), t('price_50_100'), selected_price=='50-100') }}
+          {{ filter_option(catalog_url(price='100-'), t('price_100_plus'), selected_price=='100-') }}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('campaigns'), selected_campaign or selected_sale) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(campaign='sale', sale='1'), t('campaign_sale'), selected_campaign=='sale' or selected_sale) }}
+          {{ filter_option(catalog_url(campaign='deal', sale=''), t('campaign_deal'), selected_campaign=='deal') }}
+          {{ filter_option(catalog_url(campaign='', sale=''), t('clear_filter'), not selected_campaign and not selected_sale) }}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('new_in'), selected_new) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(new='1'), t('new_arrivals'), selected_new) }}
+          {{ filter_option(catalog_url(new=''), t('clear_filter'), not selected_new) }}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('size'), selected_size) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(size=''), t('clear_filter'), not selected_size) }}
+          {% for option in filter_sizes %}
+          {{ filter_option(catalog_url(size=option), option, selected_size==option) }}
+          {% else %}
+          <p class="px-3 py-2 text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('colour'), selected_colour) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(colour=''), t('clear_filter'), not selected_colour) }}
+          {% for option in filter_colours %}
+          {{ filter_option(catalog_url(colour=option), option, selected_colour==option) }}
+          {% else %}
+          <p class="px-3 py-2 text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('brand'), selected_brand) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(brand=''), t('clear_filter'), not selected_brand) }}
+          {% for option in filter_brands %}
+          {{ filter_option(catalog_url(brand=option), option, selected_brand==option) }}
+          {% else %}
+          <p class="px-3 py-2 text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+          {% endcall %}
+        </details>
+        <details class="relative">
+          {{ filter_pill(t('specialty_sizes'), selected_specialty) }}
+          {% call filter_menu() %}
+          {{ filter_option(catalog_url(specialty=''), t('clear_filter'), not selected_specialty) }}
+          {% for option in filter_specialty %}
+          {{ filter_option(catalog_url(specialty=option), option, selected_specialty==option) }}
+          {% else %}
+          <p class="px-3 py-2 text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+          {% endcall %}
+        </details>
+        <button type="button" id="showAllFilters" class="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-black">
+          <i class="fa-solid fa-sliders"></i> {{ t('show_all_filters') }}
+        </button>
+      </div>
+      <div id="allFiltersPanel" class="hidden mb-5 rounded-2xl border border-slate-200 bg-white p-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+        <div>
+          <b class="block mb-2">{{ t('price') }}</b>
+          {{ filter_option(catalog_url(price='0-25'), t('price_under_25'), selected_price=='0-25') }}
+          {{ filter_option(catalog_url(price='25-50'), t('price_25_50'), selected_price=='25-50') }}
+          {{ filter_option(catalog_url(price='50-100'), t('price_50_100'), selected_price=='50-100') }}
+          {{ filter_option(catalog_url(price='100-'), t('price_100_plus'), selected_price=='100-') }}
+        </div>
+        <div>
+          <b class="block mb-2">{{ t('campaigns') }}</b>
+          {{ filter_option(catalog_url(campaign='sale', sale='1'), t('campaign_sale'), selected_campaign=='sale' or selected_sale) }}
+          {{ filter_option(catalog_url(campaign='deal', sale=''), t('campaign_deal'), selected_campaign=='deal') }}
+        </div>
+        <div>
+          <b class="block mb-2">{{ t('new_in') }}</b>
+          {{ filter_option(catalog_url(new='1'), t('new_arrivals'), selected_new) }}
+          {{ filter_option(catalog_url(new=''), t('clear_filter'), not selected_new) }}
+        </div>
+        <div>
+          <b class="block mb-2">{{ t('size') }}</b>
+          {% for option in filter_sizes %}
+          {{ filter_option(catalog_url(size=option), option, selected_size==option) }}
+          {% else %}
+          <p class="text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+        </div>
+        <div>
+          <b class="block mb-2">{{ t('colour') }}</b>
+          {% for option in filter_colours %}
+          {{ filter_option(catalog_url(colour=option), option, selected_colour==option) }}
+          {% else %}
+          <p class="text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+        </div>
+        <div>
+          <b class="block mb-2">{{ t('brand') }}</b>
+          {% for option in filter_brands %}
+          {{ filter_option(catalog_url(brand=option), option, selected_brand==option) }}
+          {% else %}
+          <p class="text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+        </div>
+        <div>
+          <b class="block mb-2">{{ t('specialty_sizes') }}</b>
+          {% for option in filter_specialty %}
+          {{ filter_option(catalog_url(specialty=option), option, selected_specialty==option) }}
+          {% else %}
+          <p class="text-slate-400">{{ t('no_filter_options') }}</p>
+          {% endfor %}
+        </div>
+      </div>
+      {% if products %}
+      <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+        {% for p in products %}{% include '_card.html' %}{% endfor %}
+      </div>
+      {% else %}
+      <p class="bg-white border rounded-xl p-8 text-center">{{ t('no_products_matched') }}</p>
+      {% endif %}
+    </section>
+  </div>
+</main>
+<script>
+const drawer = document.getElementById('catalogFilterDrawer');
+function setCatalogFilters(open) {
+  if (!drawer) return;
+  drawer.classList.toggle('hidden', !open);
+  document.body.classList.toggle('overflow-hidden', open);
+}
+document.getElementById('openCatalogFilters')?.addEventListener('click', () => setCatalogFilters(true));
+document.getElementById('closeCatalogFilters')?.addEventListener('click', () => setCatalogFilters(false));
+document.getElementById('closeCatalogFiltersBg')?.addEventListener('click', () => setCatalogFilters(false));
+document.getElementById('showAllFilters')?.addEventListener('click', () => {
+  document.getElementById('allFiltersPanel')?.classList.toggle('hidden');
+});
+document.addEventListener('click', event => {
+  document.querySelectorAll('section details[open]').forEach(details => {
+    if (!details.contains(event.target)) details.removeAttribute('open');
+  });
+});
+</script>
+{% include '_currency.html' %}
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ member.display_name }} listings | Admin{% endblock %}
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 py-9 w-full">
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-7">
+    <div>
+      <p class="text-red-600 font-bold text-xs">LISTING TEAM</p>
+      <h1 class="text-3xl font-black">{{ member.display_name }}</h1>
+      <p class="text-sm text-slate-500 mt-1">Username {{ member.username }} · {{ member.total }} product{{ 's' if member.total != 1 else '' }} · {{ member.live }} live{% if not member.has_account %} · no login account{% endif %}</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}#listing-team" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+
+  <section class="bg-white border rounded-2xl p-5 overflow-auto">
+    <div class="flex flex-wrap justify-between gap-3 mb-4">
+      <h2 class="font-black text-lg">Products listed by {{ member.display_name }}</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <form method="get" class="flex gap-2">
+          <input name="q" value="{{ product_search or '' }}" placeholder="Search name or SKU" class="border rounded-xl px-3 py-2 text-sm min-w-[200px]">
+          <button class="border border-red-200 text-red-700 rounded-xl px-3 py-2 text-sm font-bold">Search</button>
+        </form>
+        <a class="text-red-600 text-sm" href="{{ url_for('admin_product_new') }}">Add product</a>
+      </div>
+    </div>
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr><th class="p-2">Product</th><th>SKU</th><th>Brand</th><th>Stock</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr class="border-t">
+          <td class="p-2 font-bold">{{ product.name }}</td>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.brand or '—' }}</td>
+          <td>{{ product.stock }}</td>
+          <td>{% if product.is_draft %}Draft{% else %}{{ 'Live' if product.active else 'Hidden' }}{% endif %}</td>
+          <td class="whitespace-nowrap">
+            <a class="text-red-600 mr-2" href="{{ url_for('admin_product_edit',product_id=product.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('admin_product_copy_draft', product_id=product.id) }}" class="inline">
+              {{ csrf_field() }}
+              <button class="text-slate-600 mr-2">Copy to draft</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_product_delete',product_id=product.id) }}" class="inline" onsubmit="return confirm('Delete this product?')">
+              {{ csrf_field() }}
+              <button class="text-slate-500">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="p-4 text-slate-500" colspan="6">No products match this search.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock %}

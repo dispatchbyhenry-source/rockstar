@@ -1,0 +1,30 @@
+{% set steps = [
+  (1, t('step_basket'), url_for('cart')),
+  (2, t('step_login_guest'), url_for('checkout_account')),
+  (3, t('step_details'), url_for('checkout_details')),
+  (4, t('step_payment'), url_for('checkout_payment')),
+  (5, t('step_summary'), url_for('checkout_summary')),
+] %}
+<ol class="flex flex-wrap gap-2 text-[11px] font-bold mb-6">
+  {% for number, label, href in steps %}
+  <li class="flex items-center gap-2">
+    {% if number < checkout_step %}
+    <a href="{{ href }}" class="flex items-center gap-2 text-red-700">
+      <span class="w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center">{{ number }}</span>
+      <span class="hidden sm:inline">{{ label }}</span>
+    </a>
+    {% elif number == checkout_step %}
+    <span class="flex items-center gap-2 text-slate-900">
+      <span class="w-6 h-6 rounded-full bg-red-600 text-white grid place-items-center">{{ number }}</span>
+      <span class="hidden sm:inline">{{ label }}</span>
+    </span>
+    {% else %}
+    <span class="flex items-center gap-2 text-slate-400">
+      <span class="w-6 h-6 rounded-full bg-slate-200 grid place-items-center">{{ number }}</span>
+      <span class="hidden sm:inline">{{ label }}</span>
+    </span>
+    {% endif %}
+    {% if not loop.last %}<span class="text-slate-300">/</span>{% endif %}
+  </li>
+  {% endfor %}
+</ol>

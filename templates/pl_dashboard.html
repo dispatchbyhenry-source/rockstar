@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Listing Dashboard | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 py-9 w-full">
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-7">
+    <div class="flex flex-wrap items-center gap-3">
+      <div>
+        <p class="text-red-600 font-bold text-xs">PRODUCT LISTING TEAM</p>
+        <h1 class="text-3xl font-black">Listings Dashboard</h1>
+        {% if pl_display_name %}<p class="text-sm text-slate-500">Signed in as {{ pl_display_name }}</p>{% endif %}
+      </div>
+      <a href="{{ url_for('pl_main_categories') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Main categories</a>
+      <a href="{{ url_for('pl_sub_categories') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories</a>
+      <a href="{{ url_for('pl_sub_categories_2') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories 2</a>
+      <a href="{{ url_for('pl_sub_categories_3') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories 3</a>
+      <a href="{{ url_for('pl_sub_categories_4') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories 4</a>
+      <a href="{{ url_for('pl_listing_new') }}" class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">+ Add product</a>
+      <a href="{{ url_for('pl_password_request') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Request password change</a>
+    </div>
+    <form method="post" action="{{ url_for('pl_logout') }}">
+      <button class="border rounded-xl px-4 py-3 text-sm font-bold">Sign out</button>
+    </form>
+  </div>
+  {% if pending_password_request %}
+  <p class="bg-amber-50 text-amber-800 rounded-xl px-4 py-3 text-sm mb-5">Your password change request is waiting for admin approval.</p>
+  {% endif %}
+
+  <section class="bg-white border rounded-2xl p-5 overflow-x-auto mb-7">
+    <div class="flex flex-wrap justify-between gap-3 mb-4">
+      <h2 class="font-black text-lg">Your products</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <form method="get" class="flex gap-2">
+          <input name="q" value="{{ product_search or '' }}" placeholder="Search name or SKU" class="border rounded-xl px-3 py-2 text-sm min-w-[200px]">
+          <button class="border border-red-200 text-red-700 rounded-xl px-3 py-2 text-sm font-bold">Search</button>
+        </form>
+        <a class="text-red-600 text-sm" href="{{ url_for('pl_listing_new') }}">Add product</a>
+      </div>
+    </div>
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr><th class="p-2">Product</th><th>SKU</th><th>Brand</th><th>Category</th><th>Price (EUR)</th><th>Stock</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr class="border-t">
+          <td class="p-2 font-bold">{{ product.name }}</td>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.brand or '—' }}</td>
+          <td>{{ product.main_category }} / {{ product.sub_categories_label or product.sub_category }}{% if product.sub_category_2 %} / {{ product.sub_category_2 }}{% endif %}{% if product.sub_category_3 %} / {{ product.sub_category_3 }}{% endif %}{% if product.sub_category_4 %} / {{ product.sub_category_4 }}{% endif %}</td>
+          <td>{{ '%.2f'|format(product.price_eur) }}</td>
+          <td>{{ product.stock }}</td>
+          <td>{{ 'Live' if product.active else 'Hidden' }}{% if product.new_arrival %} · New{% endif %}</td>
+          <td class="whitespace-nowrap">
+            <a class="text-red-600 mr-2" href="{{ url_for('pl_listing_edit', product_id=product.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('pl_listing_copy_draft', product_id=product.id) }}" class="inline">
+              {{ csrf_field() }}
+              <button class="text-slate-600 mr-2">Copy to draft</button>
+            </form>
+            <form method="post" action="{{ url_for('pl_listing_delete', product_id=product.id) }}" class="inline" onsubmit="return confirm('Delete this product?')">
+              {{ csrf_field() }}
+              <button class="text-slate-500">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="py-6 text-center text-slate-500">No products match this search.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section id="drafts" class="bg-white border rounded-2xl p-5 overflow-x-auto">
+    <div class="flex justify-between mb-4">
+      <h2 class="font-black text-lg">Your drafts</h2>
+      <p class="text-xs text-slate-500">Only your drafts. You cannot see admin drafts.</p>
+    </div>
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr><th class="p-2">Product</th><th>SKU</th><th>Brand</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for product in draft_products %}
+        <tr class="border-t">
+          <td class="p-2 font-bold">{{ product.name }}</td>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.brand or '—' }}</td>
+          <td class="whitespace-nowrap">
+            <a class="text-red-600 mr-2" href="{{ url_for('pl_listing_edit', product_id=product.id) }}">Edit draft</a>
+            <form method="post" action="{{ url_for('pl_listing_copy_draft', product_id=product.id) }}" class="inline">
+              {{ csrf_field() }}
+              <button class="text-slate-600 mr-2">Copy to draft</button>
+            </form>
+            <form method="post" action="{{ url_for('pl_listing_delete', product_id=product.id) }}" class="inline" onsubmit="return confirm('Delete this draft?')">
+              {{ csrf_field() }}
+              <button class="text-slate-500">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="py-6 text-center text-slate-500">No drafts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock %}

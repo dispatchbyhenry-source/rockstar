@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('create_profile') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-md mx-auto px-4 py-14 w-full">
+  <div class="bg-white border border-red-100 rounded-3xl p-7 shadow-sm space-y-4">
+    <div class="text-center">
+      <h1 class="text-2xl font-black">{{ t('create_profile') }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ t('create_profile_blurb') }}</p>
+    </div>
+    {% if firebase %}
+      {% set mode = 'register' %}
+      {% include '_firebase_auth.html' %}
+    {% else %}
+    <form method="post" class="space-y-4">
+      <input type="hidden" name="next" value="{{ next or request.args.get('next') or '' }}">
+      <input required name="name" maxlength="100" placeholder="{{ t('full_name') }}" class="w-full border rounded-xl p-3 text-sm">
+      <input required type="email" name="email" placeholder="{{ t('email_address') }}" class="w-full border rounded-xl p-3 text-sm">
+      <input required type="password" name="password" minlength="6" placeholder="{{ t('password_min') }}" class="w-full border rounded-xl p-3 text-sm">
+      <button class="w-full bg-red-600 text-white font-bold py-3 rounded-xl">{{ t('create_profile') }}</button>
+    </form>
+    <p class="text-xs text-slate-500">Firebase sign-in is not configured yet. Add the Firebase web keys and service account in <b>.env</b>. This form stays until those keys are saved.</p>
+    {% endif %}
+    <p class="text-xs text-center text-slate-500">{{ t('already_profile') }} <a class="text-red-600 font-bold" href="{{ url_for('login', next=next or request.args.get('next')) }}">{{ t('sign_in') }}</a></p>
+  </div>
+</main>
+{% endblock %}

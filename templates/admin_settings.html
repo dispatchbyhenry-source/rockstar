@@ -1,0 +1,449 @@
+{% extends 'base.html' %}
+{% block title %}Store Settings | Admin{% endblock %}
+{% block content %}
+<main class="max-w-5xl mx-auto px-4 py-9 w-full">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <p class="text-red-600 font-bold text-xs">ADMINISTRATION</p>
+      <h1 class="text-3xl font-black">Store settings</h1>
+      <p class="text-sm text-slate-500 mt-1">Manage the store account, footer, listing team logins, password requests, and store setup.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+
+  <section class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-7">
+    <a href="{{ url_for('admin_dashboard') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Products</a>
+    <a href="{{ url_for('admin_orders') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Orders</a>
+    <a href="{{ url_for('admin_partners') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Partner applications</a>
+    <a href="{{ url_for('admin_brands') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Brands</a>
+    <a href="{{ url_for('admin_main_categories') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Main categories</a>
+    <a href="{{ url_for('admin_sub_categories') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Sub categories</a>
+    <a href="{{ url_for('admin_sub_categories_2') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Sub categories 2</a>
+    <a href="{{ url_for('admin_sub_categories_3') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Sub categories 3</a>
+    <a href="{{ url_for('admin_sub_categories_4') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Sub categories 4</a>
+    <a href="{{ url_for('admin_faqs') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">FAQs</a>
+    <a href="{{ url_for('admin_dashboard') }}#shipping" class="bg-white border rounded-2xl p-4 text-sm font-bold">Shipping charges</a>
+    <a href="{{ url_for('admin_product_new') }}" class="bg-white border rounded-2xl p-4 text-sm font-bold">Add product</a>
+  </section>
+
+  <section class="bg-white border rounded-2xl p-5 mb-7">
+    <h2 class="font-black text-lg mb-1">Footer</h2>
+    <p class="text-xs text-slate-500 mb-4">Edit brand and copyright, then add or remove extra fields. Field types: <b>text</b>, <b>long text</b>, <b>email</b>, or <b>link</b>. Shop category links stay automatic. Max {{ footer_settings.fields_max }} custom fields.</p>
+    <form method="post" class="space-y-4" id="footerSettingsForm">
+      <input type="hidden" name="action" value="footer">
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-bold text-slate-500">Brand name</label>
+          <input name="footer_brand" value="{{ footer_settings.footer_brand }}" maxlength="80" placeholder="AR Shopping World" class="w-full border rounded-xl p-3 text-sm mt-1">
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-500">Copyright line</label>
+          <input name="footer_copyright" value="{{ footer_settings.footer_copyright }}" maxlength="200" placeholder="Leave blank for © year + brand + rights" class="w-full border rounded-xl p-3 text-sm mt-1">
+        </div>
+      </div>
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <b class="text-sm">Custom footer fields</b>
+          <button type="button" id="footerAddField" class="border border-red-200 text-red-700 rounded-xl px-3 py-2 text-xs font-bold">Add field</button>
+        </div>
+        <div id="footerFieldsList" class="space-y-3">
+          {% for field in footer_settings.fields %}
+          <div class="footer-field-row border rounded-xl p-3 grid sm:grid-cols-[140px_1fr_1fr_auto] gap-2 items-start">
+            <div>
+              <label class="text-xs font-bold text-slate-500">Type</label>
+              <select name="footer_field_type" class="footer-field-type w-full border rounded-xl p-2 text-sm mt-1">
+                {% for type_name in footer_settings.field_types %}
+                <option value="{{ type_name }}" {% if field.type == type_name %}selected{% endif %}>{{ 'Long text' if type_name == 'textarea' else type_name|capitalize }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-500">Label</label>
+              <input name="footer_field_label" value="{{ field.label }}" maxlength="80" placeholder="e.g. Hours or Shipping policy" class="w-full border rounded-xl p-2 text-sm mt-1">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-500">Value / URL</label>
+              <input name="footer_field_value" value="{{ field.value }}" maxlength="500" placeholder="Text, email, or /path / https://…" class="w-full border rounded-xl p-2 text-sm mt-1">
+            </div>
+            <button type="button" class="footer-remove-field text-slate-500 text-xs font-bold mt-6 sm:mt-7">Remove</button>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Long text shows under the brand. Text/email show under Keep in touch. Links show under Customer care. Leave About blank to keep the translated default blurb.</p>
+      </div>
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Save footer</button>
+    </form>
+  </section>
+  <template id="footerFieldTemplate">
+    <div class="footer-field-row border rounded-xl p-3 grid sm:grid-cols-[140px_1fr_1fr_auto] gap-2 items-start">
+      <div>
+        <label class="text-xs font-bold text-slate-500">Type</label>
+        <select name="footer_field_type" class="footer-field-type w-full border rounded-xl p-2 text-sm mt-1">
+          <option value="text">Text</option>
+          <option value="textarea">Long text</option>
+          <option value="email">Email</option>
+          <option value="link">Link</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Label</label>
+        <input name="footer_field_label" value="" maxlength="80" placeholder="e.g. Hours or Shipping policy" class="w-full border rounded-xl p-2 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Value / URL</label>
+        <input name="footer_field_value" value="" maxlength="500" placeholder="Text, email, or /path / https://…" class="w-full border rounded-xl p-2 text-sm mt-1">
+      </div>
+      <button type="button" class="footer-remove-field text-slate-500 text-xs font-bold mt-6 sm:mt-7">Remove</button>
+    </div>
+  </template>
+  <script>
+  (function () {
+    const list = document.getElementById('footerFieldsList');
+    const template = document.getElementById('footerFieldTemplate');
+    const addBtn = document.getElementById('footerAddField');
+    const maxFields = {{ footer_settings.fields_max|int }};
+    if (!list || !template || !addBtn) return;
+    function rowCount() {
+      return list.querySelectorAll('.footer-field-row').length;
+    }
+    addBtn.addEventListener('click', () => {
+      if (rowCount() >= maxFields) {
+        alert('Maximum ' + maxFields + ' footer fields.');
+        return;
+      }
+      list.appendChild(template.content.cloneNode(true));
+    });
+    list.addEventListener('click', event => {
+      const remove = event.target.closest('.footer-remove-field');
+      if (!remove) return;
+      remove.closest('.footer-field-row')?.remove();
+    });
+  })();
+  </script>
+
+  <section class="bg-white border rounded-2xl p-5 mb-7">
+    <h2 class="font-black text-lg mb-1">Admin account</h2>
+    <p class="text-xs text-slate-500 mb-4">Signed in as <b>{{ admin_username }}</b>. The email is used for password reset and merchant verification codes.</p>
+    <form method="post" class="grid sm:grid-cols-2 gap-3 mb-6">
+      <input type="hidden" name="action" value="email">
+      <input type="email" name="admin_email" value="{{ admin_email }}" placeholder="admin@example.com" class="w-full border rounded-xl p-3 text-sm">
+      <input type="password" name="current_password" required placeholder="Current password" class="w-full border rounded-xl p-3 text-sm">
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold sm:col-span-2">Save email</button>
+    </form>
+    <form method="post" class="space-y-3">
+      <input type="hidden" name="action" value="password">
+      <input type="password" name="current_password" required placeholder="Current password" class="w-full border rounded-xl p-3 text-sm">
+      <input type="password" name="password" required minlength="10" placeholder="New password (10+ characters)" class="w-full border rounded-xl p-3 text-sm">
+      <input type="password" name="confirm_password" required minlength="10" placeholder="Confirm new password" class="w-full border rounded-xl p-3 text-sm">
+      <button class="bg-slate-900 text-white rounded-xl px-4 py-3 text-sm font-bold">Update password</button>
+    </form>
+  </section>
+
+  <section class="bg-white border rounded-2xl p-5 mb-7">
+    <h2 class="font-black text-lg mb-1">Email service</h2>
+    <p class="text-xs text-slate-500 mb-4">Gmail SMTP is used for admin password reset and merchant verification codes. Create a Google App Password (Google Account → Security → 2-Step Verification → App passwords) and paste it below. Do not use your normal Gmail password.</p>
+    {% if mail_ready %}
+    <p class="text-xs font-bold text-emerald-700 mb-4">Mail is configured. Codes and reset links can be sent to {{ admin_email }}.</p>
+    {% else %}
+    <p class="text-xs font-bold text-amber-800 mb-4">Mail is not ready yet. Save the Gmail address and app password, then send a test email.</p>
+    {% endif %}
+    <form method="post" class="grid sm:grid-cols-2 gap-3">
+      <input type="hidden" name="action" value="mail">
+      <div>
+        <label class="text-xs font-bold text-slate-500">SMTP server</label>
+        <input name="mail_server" value="{{ mail.mail_server }}" placeholder="smtp.gmail.com" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Port</label>
+        <input name="mail_port" value="{{ mail.mail_port }}" placeholder="587" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Gmail address</label>
+        <input type="email" name="mail_username" value="{{ mail.mail_username }}" placeholder="you@gmail.com" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">From address</label>
+        <input type="email" name="mail_from" value="{{ mail.mail_from }}" placeholder="you@gmail.com" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="text-xs font-bold text-slate-500">Gmail app password</label>
+        <input type="password" name="mail_password" placeholder="{{ 'Saved · enter a new app password to replace it' if mail.mail_password_set else '16-character app password' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div class="sm:col-span-2">
+        <input type="password" name="current_password" required placeholder="Current admin password" class="w-full border rounded-xl p-3 text-sm">
+      </div>
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Save email service</button>
+    </form>
+    <form method="post" class="grid sm:grid-cols-2 gap-3 mt-3">
+      <input type="hidden" name="action" value="mail_test">
+      <input type="password" name="current_password" required placeholder="Current admin password" class="w-full border rounded-xl p-3 text-sm">
+      <button class="bg-slate-900 text-white rounded-xl px-4 py-3 text-sm font-bold">Send test email</button>
+    </form>
+  </section>
+
+  <section class="bg-white border rounded-2xl p-5 mb-7">
+    <h2 class="font-black text-lg mb-1">Merchants</h2>
+    <p class="text-xs text-slate-500 mb-4">Saved merchants appear at checkout. Changes need the current admin password and a code sent to the admin email.</p>
+    {% if merchant_verify %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 space-y-3">
+      <p class="text-sm font-bold text-amber-900">Verify merchant changes</p>
+      <p class="text-xs text-amber-800">A code was sent to <b>{{ merchant_verify.sent_to }}</b>. Enter that code and your admin password to apply the new merchant accounts.</p>
+      <form method="post" class="grid sm:grid-cols-2 gap-3">
+        <input type="hidden" name="action" value="merchants_confirm">
+        <input name="verify_code" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" class="w-full border rounded-xl p-3 text-sm">
+        <input type="password" name="current_password" required placeholder="Current password" class="w-full border rounded-xl p-3 text-sm">
+        <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold sm:col-span-2">Confirm merchant changes</button>
+      </form>
+      <div class="flex flex-wrap gap-3 text-xs font-bold">
+        <form method="post" class="flex gap-2 items-center">
+          <input type="hidden" name="action" value="merchants_resend">
+          <input type="password" name="current_password" required placeholder="Current password" class="border rounded-xl p-2 text-xs">
+          <button class="text-amber-900">Resend code</button>
+        </form>
+        <form method="post">
+          <input type="hidden" name="action" value="merchants_cancel">
+          <button class="text-slate-500">Cancel change</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+    <form method="post" class="space-y-6">
+      <input type="hidden" name="action" value="merchants">
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">PayPal Business</h3>
+          <span class="text-[11px] font-bold {% if paypal_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if paypal_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Business email</label>
+            <input type="email" name="paypal_business_email" value="{{ merchants.paypal_business_email }}" placeholder="payments@business.example" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Client ID</label>
+            <input name="paypal_client_id" value="{{ merchants.paypal_client_id }}" placeholder="PayPal REST client ID" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-slate-500">Secret</label>
+            <input type="password" name="paypal_secret" placeholder="{{ 'Saved · enter a new secret to replace it' if merchants.paypal_secret else 'PayPal REST secret' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+            <p class="text-[11px] text-slate-400 mt-1">Client ID and secret are required. Checkout sends the shopper to PayPal and saves the order only after PayPal captures the payment.</p>
+          </div>
+          <label class="sm:col-span-2 text-sm font-bold">
+            <input type="checkbox" name="paypal_sandbox" value="1" {% if merchants.paypal_sandbox == '1' %}checked{% endif %}>
+            Use PayPal sandbox (test payments, no real charge)
+          </label>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">Bank merchant</h3>
+          <span class="text-[11px] font-bold {% if bank_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if bank_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Account holder</label>
+            <input name="bank_account_name" value="{{ merchants.bank_account_name }}" placeholder="Account name" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Bank name</label>
+            <input name="bank_name" value="{{ merchants.bank_name }}" placeholder="Bank name" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">IBAN / account number</label>
+            <input name="bank_iban" value="{{ merchants.bank_iban }}" placeholder="IBAN or account number" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">SWIFT / BIC</label>
+            <input name="bank_swift" value="{{ merchants.bank_swift }}" placeholder="SWIFT or BIC" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">EasyPaisa <span class="text-slate-400 font-medium">Pakistan</span></h3>
+          <span class="text-[11px] font-bold {% if easypaisa_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if easypaisa_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Account title</label>
+            <input name="easypaisa_account_name" value="{{ merchants.easypaisa_account_name }}" placeholder="Account title" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Mobile / merchant ID</label>
+            <input name="easypaisa_number" value="{{ merchants.easypaisa_number }}" placeholder="03xx or merchant ID" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">JazzCash <span class="text-slate-400 font-medium">Pakistan</span></h3>
+          <span class="text-[11px] font-bold {% if jazzcash_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if jazzcash_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Account title</label>
+            <input name="jazzcash_account_name" value="{{ merchants.jazzcash_account_name }}" placeholder="Account title" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Mobile / merchant ID</label>
+            <input name="jazzcash_number" value="{{ merchants.jazzcash_number }}" placeholder="03xx or merchant ID" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">Stripe</h3>
+          <span class="text-[11px] font-bold {% if stripe_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if stripe_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Publishable key</label>
+            <input name="stripe_publishable_key" value="{{ merchants.stripe_publishable_key }}" placeholder="pk_live_..." class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Secret key</label>
+            <input type="password" name="stripe_secret" placeholder="{{ 'Saved · enter a new secret to replace it' if merchants.stripe_secret else 'sk_live_...' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+            <p class="text-[11px] text-slate-400 mt-1">The secret key charges the card. Use sk_test_ while checking. The order is saved only after Stripe confirms the payment.</p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">Klarna <span class="text-slate-400 font-medium">Europe / USA</span></h3>
+          <span class="text-[11px] font-bold {% if klarna_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if klarna_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Merchant ID</label>
+            <input name="klarna_merchant_id" value="{{ merchants.klarna_merchant_id }}" placeholder="K123456" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">API username</label>
+            <input name="klarna_username" value="{{ merchants.klarna_username }}" placeholder="Klarna API username / UID" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="text-xs font-bold text-slate-500">API password</label>
+            <input type="password" name="klarna_secret" placeholder="{{ 'Saved · enter a new password to replace it' if merchants.klarna_secret else 'Klarna API password' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">Apple Pay</h3>
+          <span class="text-[11px] font-bold {% if apple_pay_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if apple_pay_ready else 'Not set' }}</span>
+        </div>
+        <div>
+          <label class="text-xs font-bold text-slate-500">Merchant ID</label>
+          <input name="apple_pay_merchant_id" value="{{ merchants.apple_pay_merchant_id }}" placeholder="merchant.com.store" class="w-full border rounded-xl p-3 text-sm mt-1">
+        </div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="font-bold text-sm">Zelle</h3>
+          <span class="text-[11px] font-bold {% if zelle_ready %}text-emerald-700{% else %}text-amber-700{% endif %}">{{ 'Ready' if zelle_ready else 'Not set' }}</span>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs font-bold text-slate-500">Account name</label>
+            <input name="zelle_account_name" value="{{ merchants.zelle_account_name }}" placeholder="Name on Zelle" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+          <div>
+            <label class="text-xs font-bold text-slate-500">Email or mobile</label>
+            <input name="zelle_handle" value="{{ merchants.zelle_handle }}" placeholder="name@bank.com or mobile" class="w-full border rounded-xl p-3 text-sm mt-1">
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-50 border rounded-2xl p-4 space-y-3">
+        <p class="text-xs text-slate-500">Enter the current admin password. A verification code will be emailed before any merchant account is changed.</p>
+        <input type="password" name="current_password" required placeholder="Current admin password" class="w-full border rounded-xl p-3 text-sm">
+        <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Send verification code</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="bg-white border rounded-2xl p-5 mb-7">
+    <h2 class="font-black text-lg mb-1">Listing team accounts</h2>
+    <p class="text-xs text-slate-500 mb-4">Create a username and password for each listing-team member. They sign in at <b>/pl/login</b>, not the customer Sign in page. Admin can set or reset a password without the old password.</p>
+    <form method="post" class="grid sm:grid-cols-2 gap-3 mb-6">
+      {{ csrf_field() }}
+      <input type="hidden" name="action" value="pl_create">
+      <div>
+        <label class="text-xs font-bold text-slate-500">Display name</label>
+        <input name="pl_display_name" required maxlength="80" placeholder="e.g. Rabia Ahsan" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Username</label>
+        <input name="pl_username" required maxlength="40" placeholder="e.g. rabia" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Password</label>
+        <input type="password" name="pl_password" required minlength="6" placeholder="At least 6 characters" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <div>
+        <label class="text-xs font-bold text-slate-500">Confirm password</label>
+        <input type="password" name="pl_confirm_password" required minlength="6" placeholder="Repeat password" class="w-full border rounded-xl p-3 text-sm mt-1">
+      </div>
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold sm:col-span-2">Save listing team account</button>
+    </form>
+    {% if pl_env_username %}
+    <p class="text-xs text-slate-500 mb-3">Shared env login <b>{{ pl_env_username }}</b> still works from .env. Use the form above for named accounts such as rabia, talha and kewan.</p>
+    {% endif %}
+    {% for item in pl_users %}
+    <div class="border-t py-4 text-sm space-y-3">
+      <div class="flex flex-wrap justify-between gap-3">
+        <div>
+          <b>{{ item.display_name }}</b>
+          <span class="block text-xs text-slate-500">{{ item.username }} · created {{ (item.created_at or '')[:16].replace('T', ' ') }}</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <a class="text-red-600 text-sm font-bold" href="{{ url_for('admin_listing_team_member', username=item.username) }}">View listings</a>
+          <form method="post" class="flex items-center gap-2" onsubmit="return confirm('Delete listing team account {{ item.username }}?')">
+            {{ csrf_field() }}
+            <input type="hidden" name="action" value="pl_delete">
+            <input type="hidden" name="pl_user_id" value="{{ item.id }}">
+            <input type="password" name="current_password" required placeholder="Admin password" class="border rounded-lg px-2 py-1 text-xs">
+            <button class="text-red-600 font-bold">Delete</button>
+          </form>
+        </div>
+      </div>
+      <form method="post" class="grid sm:grid-cols-3 gap-2 bg-slate-50 border rounded-xl p-3">
+        {{ csrf_field() }}
+        <input type="hidden" name="action" value="pl_set_password">
+        <input type="hidden" name="pl_user_id" value="{{ item.id }}">
+        <input type="password" name="pl_password" required minlength="6" placeholder="New password" class="border rounded-lg px-3 py-2 text-xs">
+        <input type="password" name="pl_confirm_password" required minlength="6" placeholder="Confirm new password" class="border rounded-lg px-3 py-2 text-xs">
+        <button class="bg-slate-900 text-white rounded-lg px-3 py-2 text-xs font-bold">Set password</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-500">No named listing team accounts yet.</p>
+    {% endfor %}
+  </section>
+
+  <section class="bg-white border rounded-2xl p-5">
+    <h2 class="font-black text-lg mb-1">Listing team password requests</h2>
+    <p class="text-xs text-slate-500 mb-4">Approve a request to apply the new password. Reject it to leave the current password unchanged.</p>
+    {% for item in password_requests %}
+    <div class="border-t py-3 text-sm flex flex-wrap justify-between gap-3">
+      <div>
+        <b>{{ item.display_name or item.username }}</b>
+        <span class="block text-xs text-slate-500">{{ item.username }} · {{ (item.created_at or '')[:16].replace('T', ' ') }}</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-bold {% if item.status=='approved' %}text-emerald-700{% elif item.status=='rejected' %}text-red-600{% else %}text-amber-700{% endif %}">{{ item.status|capitalize }}</span>
+        {% if item.status == 'pending' %}
+        <form method="post" action="{{ url_for('admin_approve_pl_password', request_id=item.id) }}">
+          <button class="text-emerald-700 font-bold">Approve</button>
+        </form>
+        <form method="post" action="{{ url_for('admin_reject_pl_password', request_id=item.id) }}">
+          <button class="text-slate-500">Reject</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-500">No password requests yet.</p>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

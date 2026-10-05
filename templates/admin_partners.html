@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Partner applications | Admin{% endblock %}
+{% block content %}
+<main class="max-w-6xl mx-auto px-4 py-9 w-full">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <p class="text-red-600 font-bold text-xs">ADMINISTRATION</p>
+      <h1 class="text-3xl font-black">Partner applications</h1>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+  <section class="bg-white border rounded-2xl p-5 space-y-4">
+    {% for item in applications %}
+    <article class="border-t pt-4 text-sm">
+      <div class="flex flex-wrap justify-between gap-3">
+        <div>
+          <p class="text-xs font-bold text-red-600">{{ item.kind_label }} · #{{ item.id }}</p>
+          <b>{{ item.full_name }}</b>
+          <p class="text-xs text-slate-500 mt-1">{{ item.email }} · {{ item.contact }} · {{ item.country }}</p>
+          {% if item.kind == 'seller' %}
+          <p class="text-xs mt-1">{{ item.product_name }} · {{ item.product_type }}</p>
+          {% else %}
+          <p class="text-xs mt-1">Interest: {{ item.interest }}</p>
+          <p class="text-xs text-slate-500">Sell in {{ item.sell_country }} · {{ item.platforms }}</p>
+          {% if item.store_link %}<p class="text-xs break-all">{{ item.store_link }}</p>{% endif %}
+          {% endif %}
+        </div>
+        <span class="text-xs font-bold {% if item.status=='approved' %}text-emerald-700{% elif item.status=='rejected' %}text-red-600{% else %}text-amber-700{% endif %}">{{ item.status|capitalize }}</span>
+      </div>
+      {% if item.images %}
+      <div class="flex flex-wrap gap-2 mt-3">
+        {% for image in item.images %}
+        <img src="{{ image }}" alt="" class="w-16 h-16 object-cover rounded-lg border">
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="mt-3">
+        {% if item.status != 'approved' %}
+        <form method="post" action="{{ url_for('admin_partner_approve', application_id=item.id) }}" class="inline">
+          <button class="text-emerald-700 font-bold mr-3">Approve</button>
+        </form>
+        {% endif %}
+        {% if item.status != 'rejected' %}
+        <form method="post" action="{{ url_for('admin_partner_reject', application_id=item.id) }}" class="inline">
+          <button class="text-slate-500">Reject</button>
+        </form>
+        {% endif %}
+      </div>
+    </article>
+    {% else %}
+    <p class="text-sm text-slate-500">No partner applications yet.</p>
+    {% endfor %}
+  </section>
+</main>
+{% endblock %}

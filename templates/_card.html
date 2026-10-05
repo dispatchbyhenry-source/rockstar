@@ -1,0 +1,46 @@
+<article class="bg-white border border-red-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition flex flex-col">
+  <a href="{{ url_for('product_detail', product_id=p.id, who=selected_who) if selected_who else url_for('product_detail', product_id=p.id) }}" class="h-52 overflow-hidden relative">
+    <img src="{{ p.image }}" alt="{{ p.name }}" class="w-full h-full object-cover">
+    <span class="absolute top-2 left-2 bg-white/90 px-2 py-1 rounded text-[10px] font-bold max-w-[70%] truncate">{{ p.main_categories_label }}{% if p.sub_categories_label or p.sub_category or p.category %} · {{ p.sub_categories_label or p.sub_category or p.category }}{% endif %}</span>
+    {% if p.volume_max_percent %}<span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-[10px] font-bold">{{ t('up_to_off', n=p.volume_max_percent|int) }}</span>{% endif %}
+  </a>
+  <div class="p-4 flex flex-col grow">
+    <div class="text-xs star flex items-center justify-between gap-2">
+      <span>{{ p.stars }} <b class="text-slate-700">{{ p.rating }}</b> <span class="text-slate-400">({{ p.reviews_count }})</span></span>
+      <form method="post" action="{{ url_for('like_product', product_id=p.id) }}">
+        <button class="text-slate-500 font-bold">
+          <i class="fa-{{ 'solid' if p.id in liked_ids else 'regular' }} fa-heart text-red-500"></i> {{ p.likes }}
+        </button>
+      </form>
+    </div>
+    {% if p.brand %}<p class="text-[11px] text-slate-500 font-bold uppercase tracking-wide mt-1">{{ p.brand }}</p>{% endif %}
+    <h3 class="font-bold text-sm mt-1">{{ p.name }}</h3>
+    {% if p.color_rows %}
+    <div class="flex flex-wrap items-center gap-1 mt-2">
+      {% for color in p.color_rows[:4] %}
+      <span class="w-5 h-5 rounded-full border border-slate-200 bg-slate-100 text-[9px] font-bold flex items-center justify-center" title="{{ color.name }}">{{ color.name[:1] }}</span>
+      {% endfor %}
+      {% if p.color_rows|length > 4 %}
+      <span class="text-[10px] text-slate-500 font-bold">+{{ p.color_rows|length - 4 }}</span>
+      {% endif %}
+    </div>
+    {% endif %}
+    <div class="mt-auto pt-3">
+      {% if p.volume_max_percent %}
+      <span class="block text-[10px] text-red-600 font-bold mb-1">{{ t('basic_price') }}</span>
+      <b class="price block text-red-600 text-base" data-pkr="{{ p.display_original_price_with_tax }}"></b>
+      <span class="block text-[10px] text-red-600 font-bold mt-2 mb-1">{{ t('from_qty_discount') }}</span>
+      <b class="price text-red-700 text-base" data-pkr="{{ p.volume_from_price_with_tax }}"></b>
+      <span class="block text-[10px] text-slate-400">{{ t('incl_tax', n=tax_percent) }}</span>
+      <span class="price block text-[11px] text-slate-500 mt-1" data-pkr="{{ p.volume_from_price }}"></span>
+      <span class="block text-[10px] text-slate-400">{{ t('excl_tax') }}</span>
+      {% else %}
+      <b class="price text-red-700 text-base" data-pkr="{{ p.display_price_with_tax }}"></b>
+      <span class="block text-[10px] text-slate-400">{{ t('incl_tax', n=tax_percent) }}</span>
+      <span class="price block text-[11px] text-slate-500 mt-1" data-pkr="{{ p.display_price }}"></span>
+      <span class="block text-[10px] text-slate-400">{{ t('excl_tax') }}</span>
+      {% endif %}
+      <a href="{{ url_for('product_detail', product_id=p.id, who=selected_who) if selected_who else url_for('product_detail', product_id=p.id) }}" class="inline-block mt-3 text-xs bg-red-50 text-red-600 p-2 rounded-lg font-bold">{{ t('view_product') }}</a>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="{{ language }}" dir="{{ 'rtl' if language in ['ur','ar'] else 'ltr' }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}AR Shopping World{% endblock %}</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <style>
+    body{font-family:Outfit,sans-serif}
+    html{scroll-padding-top:8rem}
+    .star{color:#f59e0b}
+    header{overflow:visible}
+    .audience-pill{display:inline-flex;align-items:center;border-radius:999px;padding:.4rem .95rem;font-size:.875rem;font-weight:800;color:#0f172a}
+    .audience-pill.is-active{background:#0f172a;color:#fff}
+    .shop-cats a{color:#1e293b}
+    .shop-cats a.is-active,.shop-cats a.is-open{box-shadow:inset 0 -2px 0 #0f172a}
+    .cat-panel{position:absolute;left:0;right:0;top:100%;z-index:60;max-height:min(70vh,34rem);overflow:auto;background:#fff;border-top:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,.12)}
+  </style>
+</head>
+<body class="min-h-screen bg-[#fdf8f8] text-slate-800 flex flex-col overflow-x-hidden">
+<div class="bg-red-950 text-red-100 text-[11px] sm:text-xs py-2">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 flex justify-between gap-3">
+    <span class="min-w-0 truncate"><b class="bg-red-600 px-2 py-1 rounded">RED EDITION</b> <span class="hidden sm:inline">{{ t('red_edition') }}</span></span>
+    <span class="hidden sm:inline shrink-0">{{ t('customer_care') }}: support@arshoppingworld.com</span>
+  </div>
+</div>
+<header class="bg-white border-b border-red-100 sticky top-0 z-50 relative">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-2 sm:gap-4">
+    <a href="{{ url_for('home') }}" class="flex items-center gap-2 min-w-0 shrink">
+      <b class="bg-red-600 text-white text-lg sm:text-xl p-2 rounded-xl shrink-0">AR</b>
+      <span class="hidden sm:block font-black leading-none text-sm sm:text-base">AR SHOPPING<br><small class="text-red-600 tracking-widest">WORLD</small></span>
+    </a>
+    <form action="{{ url_for('products') }}" class="hidden md:flex flex-1 max-w-xl relative min-w-0">
+      <input name="search" value="{{ request.args.get('search','') }}" class="w-full bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm" placeholder="{{ t('search_placeholder') }}">
+      <button class="absolute right-3 top-3 text-red-600"><i class="fa-solid fa-magnifying-glass"></i></button>
+    </form>
+    <form action="{{ url_for('preferences') }}" method="post" class="flex items-center gap-1.5 sm:gap-2 ml-auto text-xs shrink-0">
+      <select name="language" onchange="this.form.submit()" class="border border-red-100 rounded-lg p-2 max-w-[7.5rem] sm:max-w-36">
+        {% for key, value in languages.items() %}
+        <option value="{{ key }}" {% if key==language %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+      {% if current_user %}
+      <a href="{{ url_for('profile') }}" class="border border-red-100 rounded-xl px-2 sm:px-3 py-2 font-bold truncate max-w-20 sm:max-w-none">{{ current_user.name.split(' ')[0] }}</a>
+      {% else %}
+      <a href="{{ url_for('login') }}" class="border border-red-100 rounded-xl px-2 sm:px-3 py-2 font-bold whitespace-nowrap">{{ t('sign_in') }}</a>
+      {% endif %}
+      <a href="{{ url_for('cart') }}" class="bg-red-50 text-red-600 rounded-xl px-2 sm:px-3 py-2"><i class="fa-solid fa-bag-shopping"></i> <b>{{ cart_count }}</b></a>
+    </form>
+    {% if current_user %}
+    <form method="post" action="{{ url_for('logout') }}" class="hidden sm:block shrink-0">
+      <button class="border border-red-100 rounded-xl px-3 py-2 text-xs">{{ t('sign_out') }}</button>
+    </form>
+    {% endif %}
+  </div>
+  <form action="{{ url_for('products') }}" class="md:hidden px-3 pb-3 relative">
+    <input name="search" value="{{ request.args.get('search','') }}" class="w-full bg-red-50 border border-red-100 rounded-xl px-4 py-2.5 text-sm pr-10" placeholder="{{ t('search_placeholder') }}">
+    <button class="absolute right-6 top-2.5 text-red-600"><i class="fa-solid fa-magnifying-glass"></i></button>
+  </form>
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 pt-1 pb-2 flex items-center gap-1 sm:gap-2 overflow-x-auto" aria-label="Shop for">
+    {% for key, label, group in audiences %}
+    <a href="{{ url_for('products', who=key) }}" class="audience-pill whitespace-nowrap {{ 'is-active' if selected_who==key else '' }}">{{ label }}</a>
+    {% endfor %}
+  </div>
+  <nav id="shopNav" class="bg-white border-t border-red-100 relative" aria-label="Main">
+    <div class="shop-cats max-w-7xl mx-auto px-3 sm:px-4 py-3 flex items-center gap-5 sm:gap-6 overflow-x-auto text-sm font-bold whitespace-nowrap">
+      <a href="{{ shop_url(new=1) }}" class="{{ 'is-active' if selected_new else '' }}">{{ t('new_in') }}</a>
+      {% for group in shop_nav %}
+      <a href="{{ shop_url(main=group.name) }}" class="{{ 'is-active' if selected_main==group.name else '' }}" {% if group.subs %}data-cat-trigger="{{ loop.index }}" aria-expanded="false" aria-controls="cat-panel-{{ loop.index }}"{% endif %}>{{ group.name }}</a>
+      {% endfor %}
+      <a href="{{ shop_url(sale=1) }}" class="text-red-700 {{ 'is-active' if selected_sale else '' }}">{{ t('sale') }}</a>
+      <a href="{{ url_for('sell') }}" class="font-semibold text-slate-500">{{ t('become_partner') }}</a>
+      <a href="{{ url_for('contact') }}" class="font-semibold text-slate-500">{{ t('contact') }}</a>
+      {% if is_admin %}<a class="text-red-600" href="{{ url_for('admin_dashboard') }}">Admin</a>{% endif %}
+      {% if is_pl %}<a class="text-red-600" href="{{ url_for('pl_dashboard') }}">Listing team</a>{% endif %}
+    </div>
+    {% for group in shop_nav %}
+    {% if group.subs %}
+    <div id="cat-panel-{{ loop.index }}" class="cat-panel" data-cat="{{ loop.index }}" hidden>
+      <div class="max-w-7xl mx-auto px-4 py-6 grid md:grid-cols-[minmax(0,1fr)_15rem] gap-8">
+        <div class="columns-2 sm:columns-3 xl:columns-4 gap-x-8 text-sm">
+          <a href="{{ shop_url(main=group.name) }}" class="block break-inside-avoid mb-3 font-black text-slate-900 hover:text-red-700">{{ t('all_name', name=group.name) }}</a>
+          {% for sub in group.subs %}
+          {% set children = group.sub2_map.get(sub, []) %}
+          <div class="break-inside-avoid mb-4">
+            <a href="{{ shop_url(main=group.name, sub=sub) }}" class="block py-1 {{ 'font-black text-slate-900' if children else 'font-medium text-slate-700' }} hover:text-red-700">{{ sub }}</a>
+            {% for sub2 in children %}
+            <a href="{{ shop_url(main=group.name, sub=sub, sub2=sub2) }}" class="block py-1 text-slate-600 hover:text-red-700">{{ sub2 }}</a>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <a href="{{ shop_url(main=group.name) }}" class="hidden md:flex flex-col justify-end rounded-xl bg-slate-900 text-white p-4 min-h-[11rem]">
+          <span class="text-[11px] uppercase tracking-[0.16em] text-slate-300">{{ t('view_all') }}</span>
+          <span class="font-black text-lg leading-tight mt-1">{{ group.name }} →</span>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </nav>
+</header>
+{% with messages=get_flashed_messages(with_categories=true) %}
+{% for category,message in messages %}
+<div class="max-w-7xl mx-auto w-full px-4 pt-4">
+  <div class="p-3 rounded-xl text-sm {{ 'bg-red-100 text-red-700' if category=='error' else 'bg-emerald-100 text-emerald-700' }}">{{ message }}</div>
+</div>
+{% endfor %}
+{% endwith %}
+{% block content %}{% endblock %}
+<footer class="mt-auto bg-red-950 text-red-100 py-10">
+  <div class="max-w-7xl mx-auto px-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-7 text-sm">
+    <div>
+      <b class="text-xl text-white">{{ footer.brand }}</b>
+      {% if footer.about_fields %}
+        {% for field in footer.about_fields %}
+        <p class="text-red-200 mt-3 text-xs leading-relaxed">{{ field.value }}</p>
+        {% endfor %}
+      {% else %}
+      <p class="text-red-200 mt-3 text-xs leading-relaxed">{{ t('footer_blurb') }}</p>
+      {% endif %}
+    </div>
+    <div>
+      <b class="text-white">{{ t('shop') }}</b>
+      {% for group in shop_nav %}
+      <a class="block mt-3 text-xs" href="{{ shop_url(main=group.name) }}">{{ group.name }}</a>
+      {% endfor %}
+      <a class="block mt-2 text-xs" href="{{ shop_url() }}">{{ t('all_products') }}</a>
+      <a class="block mt-2 text-xs" href="{{ url_for('cart') }}">{{ t('shopping_cart') }}</a>
+    </div>
+    <div>
+      <b class="text-white">{{ t('customer_care_title') }}</b>
+      <a class="block mt-3 text-xs" href="{{ url_for('contact') }}">{{ t('contact_support') }}</a>
+      <a class="block mt-2 text-xs" href="{{ url_for('sell') }}">{{ t('vendor_portal') }}</a>
+      <a class="block mt-2 text-xs" href="{{ url_for('profile') if current_user else url_for('register') }}">{{ t('your_profile') }}</a>
+      {% for link in footer.links %}
+      <a class="block mt-2 text-xs" href="{{ link.url }}">{{ link.label }}</a>
+      {% endfor %}
+    </div>
+    <div>
+      <b class="text-white">{{ t('keep_in_touch') }}</b>
+      {% if footer.contact_fields %}
+        {% for field in footer.contact_fields %}
+        <p class="mt-3 text-xs">{% if field.label %}<span class="font-bold text-red-50">{{ field.label }}:</span> {% endif %}{{ field.value }}</p>
+        {% endfor %}
+      {% else %}
+      <p class="mt-3 text-xs">{{ footer.email }}</p>
+      <p class="mt-2 text-xs">{{ t('hours') }}</p>
+      {% endif %}
+    </div>
+  </div>
+  <p class="max-w-7xl mx-auto px-4 border-t border-red-900 mt-8 pt-5 text-xs text-red-300">{% if footer.copyright %}{{ footer.copyright }}{% else %}© 2026 {{ footer.brand }}. {{ t('rights') }}{% endif %}</p>
+</footer>
+<script>
+(function () {
+  const nav = document.getElementById("shopNav");
+  if (!nav) return;
+  const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  let closeTimer = null;
+  function closePanels() {
+    nav.querySelectorAll(".cat-panel").forEach((panel) => { panel.hidden = true; });
+    nav.querySelectorAll("[data-cat-trigger]").forEach((link) => {
+      link.classList.remove("is-open");
+      link.setAttribute("aria-expanded", "false");
+    });
+  }
+  function openPanel(id) {
+    clearTimeout(closeTimer);
+    nav.querySelectorAll(".cat-panel").forEach((panel) => { panel.hidden = panel.dataset.cat !== id; });
+    nav.querySelectorAll("[data-cat-trigger]").forEach((link) => {
+      const open = link.dataset.catTrigger === id;
+      link.classList.toggle("is-open", open);
+      link.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+  }
+  nav.querySelectorAll("[data-cat-trigger]").forEach((link) => {
+    const id = link.dataset.catTrigger;
+    link.addEventListener("mouseenter", () => { if (canHover) openPanel(id); });
+    link.addEventListener("mouseleave", () => { if (canHover) closeTimer = setTimeout(closePanels, 180); });
+    link.addEventListener("focus", () => openPanel(id));
+    link.addEventListener("click", (event) => {
+      if (canHover) return;
+      const panel = nav.querySelector('.cat-panel[data-cat="' + id + '"]');
+      if (panel && panel.hidden) {
+        event.preventDefault();
+        openPanel(id);
+      }
+    });
+  });
+  nav.querySelectorAll(".cat-panel").forEach((panel) => {
+    panel.addEventListener("mouseenter", () => { if (canHover) clearTimeout(closeTimer); });
+    panel.addEventListener("mouseleave", () => { if (canHover) closeTimer = setTimeout(closePanels, 180); });
+  });
+  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closePanels(); });
+  document.addEventListener("click", (event) => { if (!nav.contains(event.target)) closePanels(); });
+})();
+document.addEventListener("submit", function (event) {
+  const form = event.target;
+  if (!form || (form.method || "").toLowerCase() !== "post") return;
+  const path = location.pathname;
+  if (!path.startsWith("/admin") && !path.startsWith("/pl")) return;
+  if (form.querySelector("input[name=csrf_token]")) return;
+  const token = document.querySelector('meta[name="csrf-token"]');
+  if (!token) return;
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "csrf_token";
+  input.value = token.getAttribute("content") || "";
+  form.appendChild(input);
+});
+</script>
+</body>
+</html>

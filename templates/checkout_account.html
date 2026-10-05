@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('login_guest_title') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-4xl mx-auto px-4 py-10 w-full">
+  {% set checkout_step = 2 %}
+  {% include '_checkout_steps.html' %}
+  <h1 class="text-2xl font-black mb-2">{{ t('login_guest_title') }}</h1>
+  <p class="text-sm text-slate-500 mb-6">{{ t('login_guest_blurb') }}</p>
+  <div class="grid md:grid-cols-3 gap-4">
+    <form method="post" id="checkout-guest-form" class="bg-white border border-red-100 rounded-2xl p-6 flex flex-col">
+      <h2 class="font-black text-lg">{{ t('guest_checkout') }}</h2>
+      <p class="text-sm text-slate-500 mt-2 grow">{{ t('guest_blurb') }}</p>
+      <button type="submit" class="mt-5 w-full bg-red-600 text-white rounded-xl py-3 font-bold text-sm">{{ t('continue_guest') }}</button>
+    </form>
+    <article class="bg-white border border-red-100 rounded-2xl p-6 flex flex-col">
+      <h2 class="font-black text-lg">{{ t('register_now') }}</h2>
+      <p class="text-sm text-slate-500 mt-2 grow">{{ t('register_blurb') }}</p>
+      <a class="mt-5 block text-center border-2 border-red-600 text-red-700 rounded-xl py-3 font-bold text-sm" href="{{ url_for('register', next=url_for('checkout_details')) }}">{{ t('register_continue') }}</a>
+    </article>
+    <article class="bg-white border border-red-100 rounded-2xl p-6 flex flex-col">
+      <h2 class="font-black text-lg">{{ t('login') }}</h2>
+      <p class="text-sm text-slate-500 mt-2 grow">{{ t('login_existing') }}</p>
+      <a class="mt-5 block text-center bg-slate-900 text-white rounded-xl py-3 font-bold text-sm" href="{{ url_for('login', next=url_for('checkout_details')) }}">{{ t('login_continue') }}</a>
+    </article>
+  </div>
+  <a class="inline-block mt-6 text-sm font-bold text-slate-500" href="{{ url_for('cart') }}">{{ t('back_to_basket') }}</a>
+</main>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('dropship_title') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-2xl mx-auto px-4 py-10 w-full">
+  <form method="post" class="bg-white border border-red-100 rounded-3xl p-7 space-y-4">
+    <h1 class="text-2xl font-black">{{ t('dropship_title') }}</h1>
+    <p class="text-sm text-slate-500">{{ t('dropship_blurb') }}</p>
+    <label class="block text-xs font-bold text-slate-500">{{ t('interested_products') }}
+      <textarea required name="interest" maxlength="300" rows="3" class="w-full border rounded-xl p-3 text-sm mt-1"></textarea>
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('first_last_name') }}
+      <input required name="full_name" maxlength="100" value="{{ user.name or '' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('sell_country') }}
+      <input required name="sell_country" maxlength="80" list="country-options" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <datalist id="country-options">
+      {% for country in countries %}<option value="{{ country }}">{% endfor %}
+    </datalist>
+    <label class="block text-xs font-bold text-slate-500">{{ t('sell_platforms') }}
+      <input required name="platforms" maxlength="200" placeholder="{{ t('platforms_placeholder') }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('store_link') }}
+      <input name="store_link" maxlength="400" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('email_address') }}
+      <input required type="email" name="email" maxlength="120" value="{{ user.email or '' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('whatsapp') }}
+      <input required name="contact" maxlength="40" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <div class="flex gap-3">
+      <button class="bg-red-600 text-white rounded-xl px-6 py-3 text-sm font-bold">{{ t('submit') }}</button>
+      <a href="{{ url_for('sell') }}" class="border rounded-xl px-6 py-3 text-sm font-bold">{{ t('cancel') }}</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

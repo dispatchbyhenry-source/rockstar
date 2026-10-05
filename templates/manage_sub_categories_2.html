@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Sub categories 2 | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-10 w-full">
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-black">Sub categories 2</h1>
+    <a href="{{ back_url }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+  <section class="bg-white border rounded-2xl p-5">
+    <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 mb-4">
+      <input type="hidden" name="action" value="add">
+      <select required name="main_category" id="addMainCategory" class="border rounded-xl p-3 text-sm">
+        {% for category in main_categories %}
+        <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+      </select>
+      <select required name="sub_category" id="addSubCategory" class="border rounded-xl p-3 text-sm">
+        {% for main_name, options in sub_categories.items() %}
+          {% for option in options %}
+          <option value="{{ option }}" data-main="{{ main_name }}">{{ option }}</option>
+          {% endfor %}
+        {% endfor %}
+      </select>
+      <input required name="name" maxlength="40" placeholder="New sub category 2, e.g. Leather" class="border rounded-xl p-3 text-sm grow">
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Add sub category 2</button>
+    </form>
+    <div class="space-y-3">
+      {% for category in categories %}
+      <div class="flex flex-wrap gap-2 items-center border-t pt-3">
+        <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 grow row-form">
+          <input type="hidden" name="action" value="rename">
+          <input type="hidden" name="category_id" value="{{ category.id }}">
+          <select required name="main_category" class="row-main border rounded-xl p-2 text-sm">
+            {% for type_name in main_categories %}
+            <option value="{{ type_name }}" {% if category.main_category==type_name %}selected{% endif %}>{{ type_name }}</option>
+            {% endfor %}
+          </select>
+          <select required name="sub_category" class="row-sub border rounded-xl p-2 text-sm">
+            {% for main_name, options in sub_categories.items() %}
+              {% for option in options %}
+              <option value="{{ option }}" data-main="{{ main_name }}" {% if category.main_category==main_name and category.sub_category==option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% endfor %}
+          </select>
+          <input required name="name" value="{{ category.name }}" maxlength="40" class="border rounded-xl p-2 text-sm grow min-w-[160px]">
+          <button class="text-red-600 text-sm font-bold">Save</button>
+        </form>
+        <form method="post" action="{{ save_url }}" onsubmit="return confirm('Delete this sub category 2?')">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="category_id" value="{{ category.id }}">
+          <button class="text-slate-500 text-sm">Delete</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No sub categories 2 yet. Add one under a main category and sub category.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+<script>
+function filterSubOptions(mainSelect, subSelect) {
+  const main = mainSelect.value;
+  const current = subSelect.value;
+  [...subSelect.options].forEach(option => {
+    const show = option.dataset.main === main;
+    option.hidden = !show;
+    option.disabled = !show;
+  });
+  const visible = [...subSelect.options].find(option => !option.disabled);
+  if (![...subSelect.options].some(option => option.value === current && !option.disabled) && visible) {
+    subSelect.value = visible.value;
+  }
+}
+const addMain = document.getElementById('addMainCategory');
+const addSub = document.getElementById('addSubCategory');
+if (addMain && addSub) {
+  addMain.addEventListener('change', () => filterSubOptions(addMain, addSub));
+  filterSubOptions(addMain, addSub);
+}
+document.querySelectorAll('.row-form').forEach(form => {
+  const mainSelect = form.querySelector('.row-main');
+  const subSelect = form.querySelector('.row-sub');
+  mainSelect.addEventListener('change', () => filterSubOptions(mainSelect, subSelect));
+  filterSubOptions(mainSelect, subSelect);
+});
+</script>
+{% endblock %}

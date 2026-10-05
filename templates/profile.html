@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('your_profile') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-12 w-full space-y-7">
+  <form method="post" class="bg-white border border-red-100 rounded-3xl p-7 space-y-4">
+    <h1 class="text-2xl font-black">{{ t('your_profile') }}</h1>
+    <p class="text-sm text-slate-500">{{ t('profile_blurb') }}</p>
+    <input required name="name" maxlength="100" value="{{ user.name }}" class="w-full border rounded-xl p-3 text-sm">
+    {% if user.firebase_uid %}
+    <input required type="email" value="{{ user.email }}" readonly class="w-full border rounded-xl p-3 text-sm bg-slate-50">
+    <p class="text-xs text-slate-500">{{ t('firebase_email_locked') }}</p>
+    {% if user.auth_provider == 'password' and firebase %}
+    <p class="text-xs text-slate-500">{{ t('firebase_password_hint') }}</p>
+    <button type="button" id="profileReset" class="text-sm font-bold text-red-700">{{ t('email_reset_link') }}</button>
+    <p id="profileResetStatus" class="text-sm text-slate-600"></p>
+    {% elif user.auth_provider == 'google.com' %}
+    <p class="text-xs text-slate-500">Signed in with Google.</p>
+    {% elif user.auth_provider == 'facebook.com' %}
+    <p class="text-xs text-slate-500">Signed in with Facebook.</p>
+    {% endif %}
+    {% else %}
+    <input required type="email" name="email" value="{{ user.email }}" class="w-full border rounded-xl p-3 text-sm">
+    <input type="password" name="password" minlength="6" placeholder="{{ t('new_password_optional') }}" class="w-full border rounded-xl p-3 text-sm">
+    {% endif %}
+    <select name="country" class="w-full border rounded-xl p-3 text-sm">
+      {% for zone in shipping_regions %}
+      <option value="{{ zone }}" {% if (user.country or customer_region)==zone %}selected{% endif %}>{{ zone }}</option>
+      {% endfor %}
+    </select>
+    <button class="w-full bg-red-600 text-white font-bold py-3 rounded-xl">{{ t('save_profile') }}</button>
+  </form>
+
+  <section class="bg-white border border-red-100 rounded-3xl p-7">
+    <h2 class="text-xl font-black mb-4">{{ t('your_orders') }}</h2>
+    {% for order in orders %}
+    <article class="border-t py-4">
+      <div class="flex justify-between gap-3 text-sm">
+        <b>#{{ order.id }} · {{ order.created_at[:10] }}</b>
+        <span class="price font-bold" data-pkr="{{ order.total }}"></span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">{{ order.country }} · {{ order.payment_label }} · {{ order.currency }}{% if order.tax %} · {{ t('tax_on_order', n=tax_percent) }}{% endif %}</p>
+      {% include '_order_tracking.html' %}
+      {% for item in order.line_items %}
+      <p class="text-xs text-slate-600 mt-1">{{ item.get('quantity', 1) }} × {{ item.get('name', 'Item') }}{% if item.get('is_virtual') %} · {{ t('digital_delivery') }}{% else %}{% if item.get('selected_size') %} · {{ item.selected_size }}{% endif %}{% if item.get('selected_color') %} · {{ item.selected_color }}{% endif %}{% endif %}</p>
+      {% endfor %}
+    </article>
+    {% else %}
+    <p class="text-sm text-slate-500">{{ t('no_orders') }}</p>
+    {% endfor %}
+  </section>
+
+  <section class="bg-white border border-red-100 rounded-3xl p-7">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-black">{{ t('your_listings') }}</h2>
+      <a href="{{ url_for('sell') }}" class="text-red-600 text-sm font-bold">{{ t('become_partner') }}</a>
+    </div>
+    {% for listing in listings %}
+    <article class="border-t py-4 text-sm">
+      <b>{{ listing.title }}</b>
+      <p class="text-xs text-slate-500 mt-1">{{ listing.category }} · ${{ '%.2f'|format(listing.price) }} · {{ listing.status|capitalize }}</p>
+      {% if listing.product_id %}
+      <a href="{{ url_for('product_detail', product_id=listing.product_id) }}" class="text-red-600 text-xs font-bold">{{ t('view_in_shop') }}</a>
+      {% endif %}
+    </article>
+    {% else %}
+    <p class="text-sm text-slate-500">{{ t('no_listings') }}</p>
+    {% endfor %}
+  </section>
+</main>
+{% if user.firebase_uid and user.auth_provider == 'password' and firebase %}
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+const auth = getAuth(initializeApp({{ firebase|tojson }}));
+document.getElementById("profileReset")?.addEventListener("click", async () => {
+  const status = document.getElementById("profileResetStatus");
+  try {
+    await sendPasswordResetEmail(auth, {{ user.email|tojson }}, { url: window.location.origin + "/login", handleCodeInApp: false });
+    if (status) status.textContent = "Firebase sent a password reset email.";
+  } catch (error) {
+    if (status) status.textContent = (error && error.message) || "The reset email could not be sent.";
+  }
+});
+</script>
+{% endif %}
+{% include '_currency.html' %}
+{% endblock %}

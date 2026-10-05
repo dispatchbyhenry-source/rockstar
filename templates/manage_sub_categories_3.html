@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}Sub categories 3 | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-4xl mx-auto px-4 py-10 w-full">
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-black">Sub categories 3</h1>
+    <a href="{{ back_url }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+  <section class="bg-white border rounded-2xl p-5">
+    <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 mb-4">
+      <input type="hidden" name="action" value="add">
+      <select required name="main_category" id="addMainCategory" class="border rounded-xl p-3 text-sm">
+        {% for category in main_categories %}
+        <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+      </select>
+      <select required name="sub_category" id="addSubCategory" class="border rounded-xl p-3 text-sm">
+        {% for main_name, options in sub_categories.items() %}
+          {% for option in options %}
+          <option value="{{ option }}" data-main="{{ main_name }}">{{ option }}</option>
+          {% endfor %}
+        {% endfor %}
+      </select>
+      <select required name="sub_category_2" id="addSubCategory2" class="border rounded-xl p-3 text-sm">
+        {% for main_name, groups in sub_categories_2.items() %}
+          {% for sub_name, options in groups.items() %}
+            {% for option in options %}
+            <option value="{{ option }}" data-main="{{ main_name }}" data-sub="{{ sub_name }}">{{ option }}</option>
+            {% endfor %}
+          {% endfor %}
+        {% endfor %}
+      </select>
+      <input required name="name" maxlength="40" placeholder="New sub category 3" class="border rounded-xl p-3 text-sm grow">
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Add sub category 3</button>
+    </form>
+    <div class="space-y-3">
+      {% for category in categories %}
+      <div class="flex flex-wrap gap-2 items-center border-t pt-3">
+        <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 grow row-form">
+          <input type="hidden" name="action" value="rename">
+          <input type="hidden" name="category_id" value="{{ category.id }}">
+          <select required name="main_category" class="row-main border rounded-xl p-2 text-sm">
+            {% for type_name in main_categories %}
+            <option value="{{ type_name }}" {% if category.main_category==type_name %}selected{% endif %}>{{ type_name }}</option>
+            {% endfor %}
+          </select>
+          <select required name="sub_category" class="row-sub border rounded-xl p-2 text-sm">
+            {% for main_name, options in sub_categories.items() %}
+              {% for option in options %}
+              <option value="{{ option }}" data-main="{{ main_name }}" {% if category.main_category==main_name and category.sub_category==option %}selected{% endif %}>{{ option }}</option>
+              {% endfor %}
+            {% endfor %}
+          </select>
+          <select required name="sub_category_2" class="row-sub2 border rounded-xl p-2 text-sm">
+            {% for main_name, groups in sub_categories_2.items() %}
+              {% for sub_name, options in groups.items() %}
+                {% for option in options %}
+                <option value="{{ option }}" data-main="{{ main_name }}" data-sub="{{ sub_name }}" {% if category.main_category==main_name and category.sub_category==sub_name and category.sub_category_2==option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+              {% endfor %}
+            {% endfor %}
+          </select>
+          <input required name="name" value="{{ category.name }}" maxlength="40" class="border rounded-xl p-2 text-sm grow min-w-[160px]">
+          <button class="text-red-600 text-sm font-bold">Save</button>
+        </form>
+        <form method="post" action="{{ save_url }}" onsubmit="return confirm('Delete this sub category 3?')">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="category_id" value="{{ category.id }}">
+          <button class="text-slate-500 text-sm">Delete</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No sub categories 3 yet. Add one under a main, sub, and sub category 2.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+<script>
+function filterOptions(select, predicate) {
+  const current = select.value;
+  [...select.options].forEach(option => {
+    const show = predicate(option);
+    option.hidden = !show;
+    option.disabled = !show;
+  });
+  const visible = [...select.options].find(option => !option.disabled);
+  if (![...select.options].some(option => option.value === current && !option.disabled) && visible) {
+    select.value = visible.value;
+  }
+}
+function bindParents(mainSelect, subSelect, sub2Select) {
+  function refresh() {
+    filterOptions(subSelect, option => option.dataset.main === mainSelect.value);
+    filterOptions(sub2Select, option => option.dataset.main === mainSelect.value && option.dataset.sub === subSelect.value);
+  }
+  mainSelect.addEventListener('change', refresh);
+  subSelect.addEventListener('change', refresh);
+  refresh();
+}
+bindParents(document.getElementById('addMainCategory'), document.getElementById('addSubCategory'), document.getElementById('addSubCategory2'));
+document.querySelectorAll('.row-form').forEach(form => {
+  bindParents(form.querySelector('.row-main'), form.querySelector('.row-sub'), form.querySelector('.row-sub2'));
+});
+</script>
+{% endblock %}

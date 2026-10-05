@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('sell_on_site_title') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-2xl mx-auto px-4 py-10 w-full">
+  <form method="post" enctype="multipart/form-data" class="bg-white border border-red-100 rounded-3xl p-7 space-y-4">
+    <h1 class="text-2xl font-black">{{ t('sell_on_site_title') }}</h1>
+    <p class="text-sm text-slate-500">{{ t('sell_on_site_blurb') }}</p>
+    <label class="block text-xs font-bold text-slate-500">{{ t('first_last_name') }}
+      <input required name="full_name" maxlength="100" value="{{ user.name or '' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('email_address') }}
+      <input required type="email" name="email" maxlength="120" value="{{ user.email or '' }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('contact_number') }}
+      <input required name="contact" maxlength="40" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('country') }}
+      <input required name="country" maxlength="80" value="{{ user.country or '' }}" list="country-options" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <datalist id="country-options">
+      {% for country in countries %}<option value="{{ country }}">{% endfor %}
+    </datalist>
+    <label class="block text-xs font-bold text-slate-500">{{ t('product_name') }}
+      <input required name="product_name" maxlength="100" class="w-full border rounded-xl p-3 text-sm mt-1">
+    </label>
+    <label class="block text-xs font-bold text-slate-500">{{ t('product_type') }}
+      <select required name="product_type" class="w-full border rounded-xl p-3 text-sm mt-1">
+        {% for type_name in product_types %}
+        <option value="{{ type_name }}">{{ type_name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <div class="border rounded-xl p-4">
+      <b class="text-sm">{{ t('product_pictures') }}</b>
+      <p class="text-xs text-slate-500 mb-3">{{ t('pictures_hint') }}</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        {% for index in range(1, 6) %}
+        <label class="text-xs font-bold text-slate-500">{{ t('picture_n', n=index) }}
+          <input {% if index==1 %}required{% endif %} type="file" name="image_{{ index }}" accept="image/jpeg,image/png,image/webp" class="block mt-1 text-xs">
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button class="bg-red-600 text-white rounded-xl px-6 py-3 text-sm font-bold">{{ t('submit') }}</button>
+      <a href="{{ url_for('sell') }}" class="border rounded-xl px-6 py-3 text-sm font-bold">{{ t('cancel') }}</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

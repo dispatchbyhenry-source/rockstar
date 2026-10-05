@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Product Listings | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 py-9 w-full">
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-7">
+    <div>
+      <p class="text-red-600 font-bold text-xs">ADMINISTRATION</p>
+      <h1 class="text-3xl font-black">Product Listings</h1>
+    </div>
+    <a href="{{ url_for('admin_listing_new') }}" class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">+ New Listing</a>
+  </div>
+
+  <section class="bg-white border rounded-2xl p-5 overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-left border-b">
+          <th class="py-2 pr-4">ID</th>
+          <th class="py-2 pr-4">Name</th>
+          <th class="py-2 pr-4">SKU</th>
+          <th class="py-2 pr-4">Category</th>
+          <th class="py-2 pr-4">Price (EUR)</th>
+          <th class="py-2 pr-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for listing in listings %}
+        <tr class="border-b">
+          <td class="py-2 pr-4">{{ listing.id }}</td>
+          <td class="py-2 pr-4">{{ listing.product_name }}</td>
+          <td class="py-2 pr-4">{{ listing.sku }}</td>
+          <td class="py-2 pr-4">{{ listing.main_category }} / {{ listing.sub_category }}</td>
+          <td class="py-2 pr-4">{{ listing.price_europe_eur }}</td>
+          <td class="py-2 pr-4 flex gap-2">
+            <a href="{{ url_for('admin_listing_edit', listing_id=listing.id) }}" class="text-red-600 font-bold">Edit</a>
+            <form method="post" action="{{ url_for('admin_listing_delete', listing_id=listing.id) }}" onsubmit="return confirm('Delete this listing?');">
+              <button type="submit" class="text-gray-500 font-bold">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" class="py-6 text-center text-gray-500">No listings yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</main>
+{% endblock %}

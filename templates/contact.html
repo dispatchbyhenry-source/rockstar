@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="max-w-2xl mx-auto px-4 py-10 w-full">
+  <form method="post" class="bg-white border border-red-100 rounded-3xl p-7 space-y-4">
+    <h1 class="text-2xl font-black">{{ t('contact_support') }}</h1>
+    <p class="text-sm text-slate-500">{{ t('sending_as', name=user.name, email=user.email) }}</p>
+    <input value="{{ user.name }}" disabled class="w-full border rounded-xl p-3 text-sm bg-slate-50">
+    <input value="{{ user.email }}" disabled class="w-full border rounded-xl p-3 text-sm bg-slate-50">
+    <textarea required name="message" rows="6" placeholder="{{ t('how_can_help') }}" class="w-full border rounded-xl p-3 text-sm"></textarea>
+    <button class="w-full py-3 bg-red-600 text-white rounded-xl font-bold">{{ t('send_message') }}</button>
+  </form>
+</main>
+{% endblock %}

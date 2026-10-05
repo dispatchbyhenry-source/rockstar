@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Order history | Admin{% endblock %}
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 py-9 w-full">
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+    <div>
+      <p class="text-red-600 font-bold text-xs">ADMINISTRATION</p>
+      <h1 class="text-3xl font-black">Order history</h1>
+      <p class="text-sm text-slate-500 mt-1">Full record · {{ order_count }} order{{ 's' if order_count != 1 else '' }}</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+
+  <form method="get" class="flex gap-2 mb-5">
+    <input name="q" value="{{ query }}" placeholder="Search by order id, name or email" class="grow border rounded-xl p-3 text-sm">
+    <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Search</button>
+    {% if query %}
+    <a href="{{ url_for('admin_orders') }}" class="border rounded-xl px-4 py-3 text-sm font-bold">Clear</a>
+    {% endif %}
+  </form>
+
+  <section class="bg-white border rounded-2xl overflow-auto">
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr>
+          <th class="p-3">Order</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Country</th>
+          <th>Payment</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Tracking</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr class="border-t">
+          <td class="p-3 font-black">#{{ order.id }}</td>
+          <td>{{ order.created_at[:10] if order.created_at else '' }}</td>
+          <td>
+            <b>{{ order.customer_name }}</b>
+            <span class="block text-slate-500">{{ order.email }}</span>
+          </td>
+          <td>{{ order.country }}</td>
+          <td>{{ order.payment_label }}</td>
+          <td class="font-bold">{{ order.currency }} {{ '%.2f'|format(order.total) }}</td>
+          <td class="capitalize">{{ order.status }}</td>
+          <td>
+            {% if order.tracking_number %}
+            {{ order.tracking_label }} {{ order.tracking_number }}
+            {% else %}
+            —
+            {% endif %}
+          </td>
+          <td><a class="text-red-600 font-bold" href="{{ url_for('admin_order_view', order_id=order.id) }}">View</a></td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="9" class="p-6 text-sm text-slate-500">{% if query %}No orders match that search.{% else %}No orders yet.{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% if query %}
+  <p class="text-xs text-slate-500 mt-3">Showing {{ orders|length }} of {{ order_count }} orders.</p>
+  {% endif %}
+</main>
+{% endblock %}

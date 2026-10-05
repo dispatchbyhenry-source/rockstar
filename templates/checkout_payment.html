@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% block title %}{{ t('payment') }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-4xl mx-auto px-4 py-10 w-full">
+  {% set checkout_step = 4 %}
+  {% include '_checkout_steps.html' %}
+  <h1 class="text-2xl font-black mb-2">{{ t('payment') }}</h1>
+  <p class="text-sm text-slate-500 mb-5">{{ t('choose_payment') }}</p>
+  <div class="grid lg:grid-cols-5 gap-6">
+    <form method="post" id="checkout-payment-form" class="lg:col-span-3 bg-white border rounded-2xl p-6 space-y-4">
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="pay_on_delivery" {% if checkout.payment_method not in ['bank_transfer', 'paypal', 'easypaisa', 'jazzcash', 'stripe', 'klarna', 'apple_pay', 'zelle'] %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_pay_on_delivery') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('pay_pay_on_delivery_hint') }}</span>
+      </label>
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="bank_transfer" {% if checkout.payment_method == 'bank_transfer' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_bank_transfer') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{% if bank_ready %}{{ t('bank_ready_hint') }}{% else %}{{ t('bank_later_hint') }}{% endif %}</span>
+      </label>
+      {% if bank_ready %}
+      <div class="bg-slate-50 border rounded-xl p-3 text-xs space-y-1">
+        {% if merchants.bank_account_name %}<p><b>{{ t('account_holder') }}:</b> {{ merchants.bank_account_name }}</p>{% endif %}
+        {% if merchants.bank_name %}<p><b>{{ t('bank') }}:</b> {{ merchants.bank_name }}</p>{% endif %}
+        {% if merchants.bank_iban %}<p><b>{{ t('iban_account') }}:</b> {{ merchants.bank_iban }}</p>{% endif %}
+        {% if merchants.bank_swift %}<p><b>{{ t('swift_bic') }}:</b> {{ merchants.bank_swift }}</p>{% endif %}
+      </div>
+      {% endif %}
+      {% if paypal_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="paypal" {% if checkout.payment_method == 'paypal' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_paypal') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('paypal_hint') }}</span>
+      </label>
+      {% endif %}
+      {% if pakistan_checkout and easypaisa_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="easypaisa" {% if checkout.payment_method == 'easypaisa' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_easypaisa') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('wallet_hint', name='EasyPaisa') }}{% if merchants.easypaisa_number %}: {{ merchants.easypaisa_number }}{% endif %}.</span>
+      </label>
+      {% if merchants.easypaisa_account_name or merchants.easypaisa_number %}
+      <div class="bg-slate-50 border rounded-xl p-3 text-xs space-y-1">
+        {% if merchants.easypaisa_account_name %}<p><b>{{ t('account_title') }}:</b> {{ merchants.easypaisa_account_name }}</p>{% endif %}
+        {% if merchants.easypaisa_number %}<p><b>{{ t('pay_easypaisa') }}:</b> {{ merchants.easypaisa_number }}</p>{% endif %}
+      </div>
+      {% endif %}
+      {% endif %}
+      {% if pakistan_checkout and jazzcash_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="jazzcash" {% if checkout.payment_method == 'jazzcash' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_jazzcash') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('wallet_hint', name='JazzCash') }}{% if merchants.jazzcash_number %}: {{ merchants.jazzcash_number }}{% endif %}.</span>
+      </label>
+      {% if merchants.jazzcash_account_name or merchants.jazzcash_number %}
+      <div class="bg-slate-50 border rounded-xl p-3 text-xs space-y-1">
+        {% if merchants.jazzcash_account_name %}<p><b>{{ t('account_title') }}:</b> {{ merchants.jazzcash_account_name }}</p>{% endif %}
+        {% if merchants.jazzcash_number %}<p><b>{{ t('pay_jazzcash') }}:</b> {{ merchants.jazzcash_number }}</p>{% endif %}
+      </div>
+      {% endif %}
+      {% endif %}
+      {% if not pakistan_checkout and stripe_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="stripe" {% if checkout.payment_method == 'stripe' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_stripe') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('stripe_hint') }}</span>
+      </label>
+      {% endif %}
+      {% if not pakistan_checkout and klarna_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="klarna" {% if checkout.payment_method == 'klarna' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_klarna') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('klarna_hint') }}{% if merchants.klarna_merchant_id %} ({{ merchants.klarna_merchant_id }}){% endif %}.</span>
+      </label>
+      {% endif %}
+      {% if not pakistan_checkout and apple_pay_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="apple_pay" {% if checkout.payment_method == 'apple_pay' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_apple_pay') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('apple_pay_hint') }}{% if merchants.apple_pay_merchant_id %} ({{ merchants.apple_pay_merchant_id }}){% endif %}.</span>
+      </label>
+      {% endif %}
+      {% if not pakistan_checkout and zelle_ready %}
+      <label class="block border rounded-xl p-3 cursor-pointer has-[:checked]:border-red-600 has-[:checked]:bg-red-50">
+        <input required type="radio" name="payment_method" value="zelle" {% if checkout.payment_method == 'zelle' %}checked{% endif %}>
+        <b class="text-sm">{{ t('pay_zelle') }}</b>
+        <span class="block text-xs text-slate-500 ml-5">{{ t('zelle_hint') }}{% if merchants.zelle_handle %}: {{ merchants.zelle_handle }}{% endif %}.</span>
+      </label>
+      {% if merchants.zelle_account_name or merchants.zelle_handle %}
+      <div class="bg-slate-50 border rounded-xl p-3 text-xs space-y-1">
+        {% if merchants.zelle_account_name %}<p><b>{{ t('name_label') }}:</b> {{ merchants.zelle_account_name }}</p>{% endif %}
+        {% if merchants.zelle_handle %}<p><b>{{ t('pay_zelle') }}:</b> {{ merchants.zelle_handle }}</p>{% endif %}
+      </div>
+      {% endif %}
+      {% endif %}
+      <div class="flex flex-wrap justify-between items-center gap-3">
+        <a class="text-sm font-bold text-slate-500" href="{{ url_for('checkout_details') }}">{{ t('back') }}</a>
+        <button type="submit" class="bg-red-600 text-white rounded-xl px-6 py-3 font-bold text-sm w-full sm:w-auto">{{ t('continue_summary') }}</button>
+      </div>
+    </form>
+    {% include '_checkout_totals.html' %}
+  </div>
+</main>
+{% include '_currency.html' %}
+{% endblock %}

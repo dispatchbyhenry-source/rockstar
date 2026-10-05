@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% block title %}{{ "Edit Listing" if listing else "New Listing" }} | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-9 w-full">
+  <h1 class="text-3xl font-black mb-6">{{ "Edit Listing" if listing else "New Listing" }}</h1>
+  <form method="post" enctype="multipart/form-data" class="bg-white border rounded-2xl p-6 space-y-4">
+    <div class="border rounded-xl p-4">
+      <b class="text-sm">Product images</b>
+      <p class="text-xs text-slate-500 mb-3">Upload JPG, PNG or WEBP. Photos are auto-rotated, fitted on a white square, and resized. Image 1 is the main product image.</p>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <label class="text-xs">Image 1 (main)
+          <input type="file" name="main_image" accept="image/jpeg,image/png,image/webp" class="block mt-1 text-xs">
+          {% if listing and listing.picture_main %}<img src="{{ listing.picture_main }}" alt="" class="mt-2 w-16 h-16 object-cover rounded-lg">{% endif %}
+        </label>
+        <label class="text-xs">Image 2
+          <input type="file" name="image_2" accept="image/jpeg,image/png,image/webp" class="block mt-1 text-xs">
+          {% if listing and listing.picture_2 %}<img src="{{ listing.picture_2 }}" alt="" class="mt-2 w-16 h-16 object-cover rounded-lg">{% endif %}
+        </label>
+        <label class="text-xs">Image 3
+          <input type="file" name="image_3" accept="image/jpeg,image/png,image/webp" class="block mt-1 text-xs">
+          {% if listing and listing.picture_3 %}<img src="{{ listing.picture_3 }}" alt="" class="mt-2 w-16 h-16 object-cover rounded-lg">{% endif %}
+        </label>
+        {% for index in range(4, 11) %}
+        <label class="text-xs">Image {{ index }}
+          <input type="file" name="image_{{ index }}" accept="image/jpeg,image/png,image/webp" class="block mt-1 text-xs">
+          {% if listing and listing.pictures_extra and listing.pictures_extra|length > (index - 4) and listing.pictures_extra[index - 4] %}
+          <img src="{{ listing.pictures_extra[index - 4] }}" alt="" class="mt-2 w-16 h-16 object-cover rounded-lg">
+          {% endif %}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Product Name</label>
+      <input type="text" name="product_name" value="{{ listing.product_name if listing else '' }}" maxlength="100" required class="w-full border rounded-lg px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">SKU</label>
+      <input type="text" name="sku" value="{{ listing.sku if listing else '' }}" maxlength="50" required class="w-full border rounded-lg px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Condition</label>
+      <select name="condition" class="w-full border rounded-lg px-3 py-2">
+        <option value="New with tag" {% if listing and listing.condition == 'New with tag' %}selected{% endif %}>New with tag</option>
+        <option value="New without tag" {% if listing and listing.condition == 'New without tag' %}selected{% endif %}>New without tag</option>
+        <option value="Used" {% if listing and listing.condition == 'Used' %}selected{% endif %}>Used</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Main Category</label>
+        <input type="text" name="main_category" value="{{ listing.main_category if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Sub Category</label>
+        <input type="text" name="sub_category" value="{{ listing.sub_category if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Product Type</label>
+      <select name="product_type" class="w-full border rounded-lg px-3 py-2">
+        <option value="Clothes" {% if listing and listing.product_type == 'Clothes' %}selected{% endif %}>Clothes</option>
+        <option value="Shoes" {% if listing and listing.product_type == 'Shoes' %}selected{% endif %}>Shoes</option>
+        <option value="Accessories" {% if listing and listing.product_type == 'Accessories' %}selected{% endif %}>Accessories</option>
+        <option value="Sports" {% if listing and listing.product_type == 'Sports' %}selected{% endif %}>Sports</option>
+        <option value="Others" {% if listing and listing.product_type == 'Others' %}selected{% endif %}>Others</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Product Weight (kg)</label>
+        <input type="number" step="0.01" name="product_weight_kg" value="{{ listing.product_weight_kg if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Packing Weight (kg)</label>
+        <input type="number" step="0.01" name="packing_weight_kg" value="{{ listing.packing_weight_kg if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Size Group</label>
+        <select name="size_group" class="w-full border rounded-lg px-3 py-2">
+          <option value="Male" {% if listing and listing.size_group == 'Male' %}selected{% endif %}>Male</option>
+          <option value="Female" {% if listing and listing.size_group == 'Female' %}selected{% endif %}>Female</option>
+          <option value="Unisex" {% if listing and listing.size_group == 'Unisex' %}selected{% endif %}>Unisex</option>
+          <option value="Child" {% if listing and listing.size_group == 'Child' %}selected{% endif %}>Child</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Size Value</label>
+        <input type="text" name="size_value" value="{{ listing.size_value if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Colours (comma-separated, up to 10)</label>
+      <input type="text" name="colours" value="{{ listing.colours|join(', ') if listing and listing.colours else '' }}" class="w-full border rounded-lg px-3 py-2">
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Price Europe (EUR)</label>
+        <input type="number" step="0.01" name="price_europe_eur" value="{{ listing.price_europe_eur if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Discount Europe (%)</label>
+        <input type="number" step="0.01" name="discount_europe_percent" value="{{ listing.discount_europe_percent if listing else 0 }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Price Pakistan (PKR)</label>
+        <input type="number" step="0.01" name="price_pakistan_pkr" value="{{ listing.price_pakistan_pkr if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Discount Pakistan (%)</label>
+        <input type="number" step="0.01" name="discount_pakistan_percent" value="{{ listing.discount_pakistan_percent if listing else 0 }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Region Visibility</label>
+      <select name="region_visibility" class="w-full border rounded-lg px-3 py-2">
+        <option value="Europe/America only" {% if listing and listing.region_visibility == 'Europe/America only' %}selected{% endif %}>Europe/America only</option>
+        <option value="Pakistan only" {% if listing and listing.region_visibility == 'Pakistan only' %}selected{% endif %}>Pakistan only</option>
+        <option value="germany" {% if listing and listing.region_visibility == 'germany' %}selected{% endif %}>Germany only</option>
+        <option value="europe_uk" {% if listing and listing.region_visibility == 'europe_uk' %}selected{% endif %}>Europe and UK</option>
+        <option value="germany_pakistan" {% if listing and listing.region_visibility == 'germany_pakistan' %}selected{% endif %}>Germany and Pakistan</option>
+        <option value="All regions" {% if listing and listing.region_visibility == 'All regions' %}selected{% endif %}>All regions</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Shipping Cost Germany</label>
+        <input type="number" step="0.01" name="shipping_cost_germany" value="{{ listing.shipping_cost_germany if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Shipping Cost Europe</label>
+        <input type="number" step="0.01" name="shipping_cost_europe" value="{{ listing.shipping_cost_europe if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Shipping Cost America</label>
+        <input type="number" step="0.01" name="shipping_cost_america" value="{{ listing.shipping_cost_america if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Shipping Cost Pakistan</label>
+        <input type="number" step="0.01" name="shipping_cost_pakistan" value="{{ listing.shipping_cost_pakistan if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">Express Shipping Charge</label>
+        <input type="number" step="0.01" name="express_shipping_charge" value="{{ listing.express_shipping_charge if listing else 10 }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Shipping Method</label>
+        <select name="shipping_method" class="w-full border rounded-lg px-3 py-2">
+          <option value="Normal Shipping" {% if listing and listing.shipping_method == 'Normal Shipping' %}selected{% endif %}>Normal Shipping</option>
+          <option value="Express Shipping" {% if listing and listing.shipping_method == 'Express Shipping' %}selected{% endif %}>Express Shipping</option>
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Description</label>
+      <textarea name="description" rows="6" maxlength="3000" class="w-full border rounded-lg px-3 py-2">{{ listing.description if listing else '' }}</textarea>
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Product Tags (comma-separated, up to 10)</label>
+      <input type="text" name="product_tags" value="{{ listing.product_tags|join(', ') if listing and listing.product_tags else '' }}" class="w-full border rounded-lg px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-bold mb-1">Product Hashtags (comma-separated, up to 10)</label>
+      <input type="text" name="product_hashtags" value="{{ listing.product_hashtags|join(', ') if listing and listing.product_hashtags else '' }}" class="w-full border rounded-lg px-3 py-2">
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-bold mb-1">eBay Link</label>
+        <input type="text" name="link_ebay" value="{{ listing.link_ebay if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Etsy Link</label>
+        <input type="text" name="link_etsy" value="{{ listing.link_etsy if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+      <div>
+        <label class="block text-sm font-bold mb-1">Amazon Link</label>
+        <input type="text" name="link_amazon" value="{{ listing.link_amazon if listing else '' }}" class="w-full border rounded-lg px-3 py-2">
+      </div>
+    </div>
+    <button type="submit" class="bg-red-600 text-white rounded-xl px-6 py-3 text-sm font-bold">Save</button>
+  </form>
+</main>
+{% endblock %}

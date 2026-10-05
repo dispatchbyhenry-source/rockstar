@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-7xl mx-auto px-4 py-9 w-full">
+  <div class="flex flex-wrap justify-between items-center gap-3 mb-7">
+    <div class="flex flex-wrap items-center gap-3">
+      <div>
+        <p class="text-red-600 font-bold text-xs">ADMINISTRATION</p>
+        <h1 class="text-3xl font-black">Store dashboard</h1>
+      </div>
+      <a href="{{ url_for('admin_dashboard') }}#listing-team" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Listing team</a>
+      <a href="{{ url_for('admin_partners') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Partner applications</a>
+      <a href="{{ url_for('admin_orders') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Order history</a>
+      <a href="{{ url_for('admin_brands') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Brands</a>
+      <a href="{{ url_for('admin_main_categories') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Main categories</a>
+      <a href="{{ url_for('admin_sub_categories') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories</a>
+      <a href="{{ url_for('admin_sub_categories_2') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories 2</a>
+      <a href="{{ url_for('admin_sub_categories_3') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories 3</a>
+      <a href="{{ url_for('admin_sub_categories_4') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Sub categories 4</a>
+      <a href="{{ url_for('admin_faqs') }}" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">FAQs</a>
+      <a href="#shipping" class="border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm font-bold">Shipping charges</a>
+      <a href="{{ url_for('admin_product_new') }}" class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">+ Add product</a>
+      <a href="{{ url_for('admin_settings') }}" class="bg-slate-900 text-white rounded-xl px-4 py-3 text-sm font-bold">Settings{% if pending_password_requests %} · {{ pending_password_requests }}{% endif %}</a>
+    </div>
+    <form method="post" action="{{ url_for('admin_logout') }}">
+      {{ csrf_field() }}
+      <button class="border rounded-xl px-4 py-3 text-sm font-bold">Sign out</button>
+    </form>
+  </div>
+  {% if security_notes %}
+  <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-7 text-sm text-amber-900">
+    <b>Security checklist</b>
+    <ul class="list-disc pl-5 mt-2 space-y-1">
+      {% for note in security_notes %}
+      <li>{{ note }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <section class="mb-8">
+    <div class="flex flex-wrap justify-between items-end gap-3 mb-4">
+      <div>
+        <p class="text-red-600 font-bold text-xs">OVERVIEW</p>
+        <h2 class="text-2xl font-black">Sales overview</h2>
+        <p class="text-sm text-slate-500">Revenue is shown in EUR. Last 14 days and current month.</p>
+      </div>
+      <a href="{{ url_for('admin_orders') }}" class="text-red-600 text-sm font-bold">View all orders</a>
+    </div>
+    <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-5">
+      <div class="rounded-3xl p-5 text-white bg-gradient-to-br from-red-700 via-red-600 to-rose-500 shadow-lg shadow-red-200">
+        <p class="text-xs font-bold uppercase tracking-widest text-red-100">Total revenue</p>
+        <p class="text-3xl font-black mt-2">€{{ '%.2f'|format(sales.revenue_eur) }}</p>
+        <p class="text-xs text-red-100 mt-2">{{ sales.order_count }} order{{ 's' if sales.order_count != 1 else '' }} all time</p>
+      </div>
+      <div class="bg-white border border-red-100 rounded-3xl p-5">
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400">This month</p>
+        <p class="text-3xl font-black mt-2 text-slate-900">€{{ '%.2f'|format(sales.month_revenue_eur) }}</p>
+        <p class="text-xs text-slate-500 mt-2">Paid and pending checkout totals</p>
+      </div>
+      <div class="bg-white border border-red-100 rounded-3xl p-5">
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Last 7 days</p>
+        <p class="text-3xl font-black mt-2 text-slate-900">€{{ '%.2f'|format(sales.week_revenue_eur) }}</p>
+        <p class="text-xs text-slate-500 mt-2">Recent sales momentum</p>
+      </div>
+      <div class="bg-white border border-red-100 rounded-3xl p-5">
+        <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Average order</p>
+        <p class="text-3xl font-black mt-2 text-slate-900">€{{ '%.2f'|format(sales.average_eur) }}</p>
+        <p class="text-xs text-slate-500 mt-2">Including tax and shipping</p>
+      </div>
+    </div>
+    <div class="grid lg:grid-cols-5 gap-4">
+      <div class="lg:col-span-3 bg-white border border-red-100 rounded-3xl p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-black">Sales trend</h3>
+          <span class="text-xs text-slate-400 font-bold">14 days</span>
+        </div>
+        <div class="h-64">
+          <canvas id="salesTrendChart"></canvas>
+        </div>
+      </div>
+      <div class="lg:col-span-2 bg-white border border-red-100 rounded-3xl p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-black">Order status</h3>
+          <span class="text-xs text-slate-400 font-bold">{{ sales.order_count }} total</span>
+        </div>
+        <div class="h-64">
+          <canvas id="orderStatusChart"></canvas>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mt-4 text-center text-xs">
+          <div class="rounded-2xl bg-red-50 p-2">
+            <b class="block text-red-700">{{ sales.status_counts.new }}</b>
+            <span class="text-slate-500">New</span>
+          </div>
+          <div class="rounded-2xl bg-amber-50 p-2">
+            <b class="block text-amber-700">{{ sales.status_counts.processing }}</b>
+            <span class="text-slate-500">Processing</span>
+          </div>
+          <div class="rounded-2xl bg-emerald-50 p-2">
+            <b class="block text-emerald-700">{{ sales.status_counts.shipped }}</b>
+            <span class="text-slate-500">Shipped</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="shipping" class="bg-white border rounded-2xl p-5 mb-7">
+    <h2 class="font-black text-lg mb-2">Shipping charges</h2>
+    <p class="text-xs text-slate-500 mb-4">Four separate regions. Set under 5 kg and over 5 kg for each one.</p>
+    <form method="post" action="{{ url_for('admin_shipping') }}" class="space-y-4">
+      <div class="grid md:grid-cols-2 gap-4">
+        {% for zone in shipping_zones %}
+        <div class="border rounded-2xl p-4">
+          <h3 class="font-black text-base mb-1">{{ zone.name }}</h3>
+          <p class="text-xs text-slate-500 mb-3">Prices in {{ 'euros' if zone.unit == 'EUR' else 'rupees' }}.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-500">Under 5 kg</label>
+              <input required type="number" step="0.01" min="0" name="under_{{ zone.key }}" value="{{ zone.under }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-500">Over 5 kg</label>
+              <input required type="number" step="0.01" min="0" name="over_{{ zone.key }}" value="{{ zone.over }}" class="w-full border rounded-xl p-3 text-sm mt-1">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="bg-red-600 text-white rounded-xl px-5 py-3 text-sm font-bold">Save shipping charges</button>
+    </form>
+  </section>
+
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    {% for label,count,href in [('Products',products|length, url_for('admin_dashboard')),('Orders',order_count, url_for('admin_orders')),('Reviews',reviews|length, none),('Messages',contacts|length, none)] %}
+    <div class="bg-white border rounded-2xl p-5">
+      <small class="text-slate-400">{{ label }}</small>
+      {% if href %}
+      <a href="{{ href }}" class="block text-3xl mt-1 font-black hover:text-red-600">{{ count }}</a>
+      {% else %}
+      <b class="block text-3xl mt-1">{{ count }}</b>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+
+  <section id="listing-team" class="bg-white border rounded-2xl p-5 mb-7">
+    <div class="flex flex-wrap justify-between items-end gap-3 mb-4">
+      <div>
+        <h2 class="font-black text-lg">Listing team</h2>
+        <p class="text-sm text-slate-500">Open a person to see every product they listed. Shoppers do not see these names.</p>
+      </div>
+      <a class="text-red-600 text-sm font-bold" href="{{ url_for('admin_settings') }}">Manage accounts</a>
+    </div>
+    {% if listing_team %}
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for member in listing_team %}
+      <a href="{{ url_for('admin_listing_team_member', username=member.username) }}" class="block border border-red-100 rounded-2xl p-4 hover:border-red-400 hover:bg-red-50">
+        <p class="font-black">{{ member.display_name }}</p>
+        <p class="text-xs text-slate-500 mt-1">{{ member.username }}{% if not member.has_account %} · no login account{% endif %}</p>
+        <p class="text-sm font-bold mt-3">{{ member.total }} product{{ 's' if member.total != 1 else '' }} · {{ member.live }} live</p>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-slate-500">No listing-team accounts or PL-listed products yet. Create accounts in Settings.</p>
+    {% endif %}
+  </section>
+
+  <section class="bg-white border rounded-2xl p-5 mb-7 overflow-auto">
+    <div class="flex flex-wrap justify-between gap-3 mb-4">
+      <h2 class="font-black text-lg">Products</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <form method="get" action="{{ url_for('admin_dashboard') }}" class="flex gap-2">
+          <input name="q" value="{{ product_search or '' }}" placeholder="Search name or SKU" class="border rounded-xl px-3 py-2 text-sm min-w-[200px]">
+          <button class="border border-red-200 text-red-700 rounded-xl px-3 py-2 text-sm font-bold">Search</button>
+        </form>
+        <a class="text-red-600 text-sm" href="{{ url_for('admin_product_new') }}">Add product</a>
+      </div>
+    </div>
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr><th class="p-2">Product</th><th>SKU</th><th>Brand</th><th>Listed by</th><th>Stock</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+        <tr class="border-t">
+          <td class="p-2 font-bold">{{ product.name }}</td>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.brand or '—' }}</td>
+          <td>{% if product.listed_by and product.listed_by != 'admin' %}<a class="text-red-600 font-bold" href="{{ url_for('admin_listing_team_member', username=product.listed_by) }}">{{ product.listed_by }}</a>{% else %}Admin{% endif %}</td>
+          <td>{{ product.stock }}</td>
+          <td>{{ 'Live' if product.active else 'Hidden' }}{% if product.new_arrival %} · New{% endif %}</td>
+          <td class="whitespace-nowrap">
+            <a class="text-red-600 mr-2" href="{{ url_for('admin_product_edit',product_id=product.id) }}">Edit</a>
+            <form method="post" action="{{ url_for('admin_product_copy_draft', product_id=product.id) }}" class="inline">
+              {{ csrf_field() }}
+              <button class="text-slate-600 mr-2">Copy to draft</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_product_delete',product_id=product.id) }}" class="inline" onsubmit="return confirm('Delete this product?')">
+              {{ csrf_field() }}
+              <button class="text-slate-500">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="py-6 text-center text-slate-500">No products match this search.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section id="drafts" class="bg-white border rounded-2xl p-5 mb-7 overflow-auto">
+    <div class="flex justify-between mb-4">
+      <h2 class="font-black text-lg">Your drafts</h2>
+      <p class="text-xs text-slate-500">Admin drafts only. Listing-team drafts are not shown here.</p>
+    </div>
+    <table class="w-full text-left text-xs">
+      <thead class="text-slate-400">
+        <tr><th class="p-2">Product</th><th>SKU</th><th>Brand</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for product in draft_products %}
+        <tr class="border-t">
+          <td class="p-2 font-bold">{{ product.name }}</td>
+          <td>{{ product.sku }}</td>
+          <td>{{ product.brand or '—' }}</td>
+          <td class="whitespace-nowrap">
+            <a class="text-red-600 mr-2" href="{{ url_for('admin_product_edit',product_id=product.id) }}">Edit draft</a>
+            <form method="post" action="{{ url_for('admin_product_delete',product_id=product.id) }}" class="inline" onsubmit="return confirm('Delete this draft?')">
+              {{ csrf_field() }}
+              <button class="text-slate-500">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="py-6 text-center text-slate-500">No admin drafts yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="grid lg:grid-cols-2 gap-7">
+    <div class="bg-white border rounded-2xl p-5 overflow-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="font-black text-lg">Recent orders</h2>
+        <a class="text-red-600 text-sm font-bold" href="{{ url_for('admin_orders') }}">Full history</a>
+      </div>
+      {% for order in orders %}
+      <div class="border-t py-3 text-xs flex justify-between gap-3">
+        <div>
+          <b>#{{ order.id }} · {{ order.customer_name }}</b>
+          <span class="block text-slate-500">{{ order.country }} · {{ order.payment_method }} · {{ order.currency }} {{ '%.2f'|format(order.total) }} · {{ (order.status or 'new')|capitalize }}</span>
+        </div>
+        <a class="text-red-600 font-bold whitespace-nowrap" href="{{ url_for('admin_order_view', order_id=order.id) }}">View</a>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No orders yet.</p>
+      {% endfor %}
+    </div>
+    <div class="bg-white border rounded-2xl p-5 overflow-auto">
+      <h2 class="font-black text-lg mb-4">Recent reviews</h2>
+      {% for review in reviews %}
+      <div class="border-t py-3 text-xs">
+        <b>{{ review.product_name }} · {{ review.name }}</b>
+        <span class="star"> {{ '★' * review.rating }}</span>
+        <p class="text-slate-500 mt-1">{{ review.body }}</p>
+        <form method="post" action="{{ url_for('admin_review_delete',review_id=review.id) }}" class="mt-1">
+          <button class="text-red-600">Delete review</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No reviews yet.</p>
+      {% endfor %}
+    </div>
+    <div class="bg-white border rounded-2xl p-5">
+      <h2 class="font-black text-lg mb-4">Contact messages</h2>
+      {% for contact in contacts %}
+      <div class="border-t py-3 text-xs">
+        <b>{{ contact.name }} · {{ contact.email }}</b>
+        <p class="text-slate-500 mt-1">{{ contact.message }}</p>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No messages yet.</p>
+      {% endfor %}
+    </div>
+    <div class="bg-white border rounded-2xl p-5">
+      <h2 class="font-black text-lg mb-4">Seller listings</h2>
+      {% for listing in listings %}
+      <div class="border-t py-3 text-xs">
+        <b>{{ listing.title }} · {{ listing.seller_name }}</b>
+        <p class="text-slate-500 mt-1">{{ listing.category }} · ${{ '%.2f'|format(listing.price) }} · {{ listing.status|capitalize }}</p>
+        {% if listing.product_id %}
+        <a href="{{ url_for('product_detail', product_id=listing.product_id) }}" class="text-red-600 mr-2">View product</a>
+        {% endif %}
+        {% if listing.status != 'approved' %}
+        <form method="post" action="{{ url_for('admin_listing_approve', listing_id=listing.id) }}" class="inline">
+          <button class="text-emerald-700 font-bold mr-2">Approve</button>
+        </form>
+        {% endif %}
+        {% if listing.status != 'rejected' %}
+        <form method="post" action="{{ url_for('admin_listing_reject', listing_id=listing.id) }}" class="inline">
+          <button class="text-slate-500">Reject</button>
+        </form>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No seller listings yet.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+<script>
+const salesLabels = {{ sales.daily_labels|tojson }};
+const salesValues = {{ sales.daily_values|tojson }};
+const statusCounts = {{ sales.status_counts|tojson }};
+const trend = document.getElementById('salesTrendChart');
+if (trend && window.Chart) {
+  new Chart(trend, {
+    type: 'line',
+    data: {
+      labels: salesLabels,
+      datasets: [{
+        label: 'Revenue (EUR)',
+        data: salesValues,
+        borderColor: '#dc2626',
+        backgroundColor: 'rgba(220, 38, 38, 0.12)',
+        fill: true,
+        tension: 0.35,
+        borderWidth: 3,
+        pointRadius: 3,
+        pointBackgroundColor: '#dc2626'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94a3b8', maxRotation: 0 } },
+        y: { beginAtZero: true, grid: { color: '#fee2e2' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+}
+const status = document.getElementById('orderStatusChart');
+if (status && window.Chart) {
+  new Chart(status, {
+    type: 'doughnut',
+    data: {
+      labels: ['New', 'Processing', 'Shipped'],
+      datasets: [{
+        data: [statusCounts.new || 0, statusCounts.processing || 0, statusCounts.shipped || 0],
+        backgroundColor: ['#dc2626', '#d97706', '#059669'],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, color: '#475569' } }
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

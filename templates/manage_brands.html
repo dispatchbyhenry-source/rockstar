@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Brands | AR Shopping World{% endblock %}
+{% block content %}
+<main class="max-w-3xl mx-auto px-4 py-10 w-full">
+  <div class="flex justify-between items-center mb-5">
+    <h1 class="text-2xl font-black">Brands</h1>
+    <a href="{{ back_url }}" class="text-red-600 text-sm font-bold">← Dashboard</a>
+  </div>
+  <p class="text-sm text-slate-500 mb-4">These names appear in the shopper Brand filter and on the product form. Listing-team usernames are not brands.</p>
+  <section class="bg-white border rounded-2xl p-5">
+    <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 mb-4">
+      <input type="hidden" name="action" value="add">
+      <input required name="name" maxlength="80" placeholder="New brand, e.g. Nike" class="border rounded-xl p-3 text-sm grow">
+      <button class="bg-red-600 text-white rounded-xl px-4 py-3 text-sm font-bold">Add brand</button>
+    </form>
+    <div class="space-y-3">
+      {% for brand in brands %}
+      <div class="flex flex-wrap gap-2 items-center border-t pt-3">
+        <form method="post" action="{{ save_url }}" class="flex flex-wrap gap-2 grow">
+          <input type="hidden" name="action" value="rename">
+          <input type="hidden" name="brand_id" value="{{ brand.id }}">
+          <input required name="name" value="{{ brand.name }}" maxlength="80" class="border rounded-xl p-2 text-sm grow min-w-[160px]">
+          <button class="text-red-600 text-sm font-bold">Save</button>
+        </form>
+        <form method="post" action="{{ save_url }}" onsubmit="return confirm('Delete this brand?')">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="brand_id" value="{{ brand.id }}">
+          <button class="text-slate-500 text-sm">Delete</button>
+        </form>
+      </div>
+      {% else %}
+      <p class="text-sm text-slate-500">No brands yet. Add the names shoppers should filter by.</p>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}
